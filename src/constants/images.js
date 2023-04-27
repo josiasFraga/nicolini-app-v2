@@ -1,0 +1,16 @@
+export default {
+  LOGO: require('@assets/imgs/logo.png'),
+  LOGO_ROTATED: require('@assets/imgs/logo_rotated.png'),
+  BG_LOGIN: require('@assets/imgs/bg_login.png'),
+  BG_HOME: require('@assets/imgs/caminhao.png'),
+  BALL_BG: require('@assets/imgs/ball_bg.png'),
+  DISCOUNT_ICON: require('@assets/imgs/discount.png'),
+  PIN_BIG: require('@assets/imgs/pin.png'),
+  MAPA: require('@assets/imgs/mapa.png'),
+  MAPA2: require('@assets/imgs/mapa2.png'),
+  CINCO_EIXOS: require('@assets/imgs/5eixos.png'),
+  QUATRO_EIXOS: require('@assets/imgs/4eixos.png'),
+  BARROSJUNIO_LOGO: require('@assets/imgs/barrosjunio-logo.png'),
+  LOGIN_ICON_USER: require('@assets/imgs/login_icon_user.png'),
+  ICON_TRIP: require('@assets/imgs/icon_trip.png'),
+};
