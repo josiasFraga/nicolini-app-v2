@@ -15,9 +15,9 @@ import Header from '@components/Header';
 
 import COLORS from '@constants/colors';
 
-export function CenaRecebimentoFornecedoresItensPeso (props) {
+export function CenaRecebimentoFornecedoresItensRecontar (props) {
     
-    const [produtosPeso, setProdutosPeso] = useState([]);
+    const [produtosRecontar, setProdutosRecontar] = useState([]);
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     
@@ -58,13 +58,6 @@ export function CenaRecebimentoFornecedoresItensPeso (props) {
                 return _item.cd_codigoint == good.cd_codigoint;
             })[0];
 
-            console.log('_item.cd_codigoint');
-            console.log(_item.cd_codigoint);
-
-            if ( _good.cd_unidade != 'kg' ) {
-                return false;
-            }
-
             const buscaUsuario = search.trim().toLocaleLowerCase();
             const buscaTesteNome = String(_good.tx_descricao.toLocaleLowerCase()).includes(buscaUsuario);
             const buscaTesteEan = String(_good.cd_codigoean.toLocaleLowerCase()).includes(buscaUsuario);
@@ -77,10 +70,8 @@ export function CenaRecebimentoFornecedoresItensPeso (props) {
 
             if ( scannedItems != null ) {
                 let collection = scannedItems.filter((san_itens)=>{
-                    console.log(san_itens);
                     return san_itens.cd_codagrupador == _item.cd_codagrupador;
                 });
-
 
                 if ( collection.length > 0 ) {
                     let _item_on_itens_read = collection[0].itens.filter((_item_read)=>{
@@ -105,7 +96,7 @@ export function CenaRecebimentoFornecedoresItensPeso (props) {
 
         });
 
-        setProdutosPeso(_produtos);        
+        setProdutosRecontar(_produtos);        
         setIsLoading(false);
 
     }
@@ -125,15 +116,15 @@ export function CenaRecebimentoFornecedoresItensPeso (props) {
         setSearch(search);
     };
 
-    const renderItem = ({ item }) => {
-        return (<ListItem bottomDivider key={item.cd_id} onPress={()=>{ opeModalBarCodeRead(item) }}>
+    const renderItem = ({ item }) => (
+        <ListItem bottomDivider key={item.cd_id} onPress={()=>{ opeModalBarCodeRead(item) }}>
         <ListItem.Content>
           <ListItem.Title>{item.good.tx_descricao}</ListItem.Title>
           <ListItem.Subtitle>{item.good.cd_codigoean}</ListItem.Subtitle>
         </ListItem.Content>
         <Text>QTD: {item.n_readed}</Text>
-      </ListItem>);
-    };
+      </ListItem>
+    );
     
     return (
         <View style={styles.container}>
@@ -147,7 +138,7 @@ export function CenaRecebimentoFornecedoresItensPeso (props) {
                 <Text style={{color: "#FFF", textAlign: "center", fontSize: 18, paddingTop: 10, textTransform: "uppercase"}}>Produtos</Text>
                 <View style={[GlobalStyle.row, { justifyContent: "space-around", alignItems: "center"}]}>
                     <View style={{padding: 5, marginRight: 5, flex: 1}}>
-                        <Text style={{textAlign: "center", fontSize: 18, color: "#FFF", fontWeight: "bold"}}>{produtosPeso.length}</Text>
+                        <Text style={{textAlign: "center", fontSize: 18, color: "#FFF", fontWeight: "bold"}}>{produtosRecontar.length}</Text>
                         <Text style={{color: "#FFF", textAlign: "center"}}>Nº Produtos Encontrados</Text>
                     </View>
                 </View>
@@ -160,7 +151,7 @@ export function CenaRecebimentoFornecedoresItensPeso (props) {
             />
             <View style={[{flex: 1, justifyContent: 'center'}]}>
                 <FlatList
-                    data={produtosPeso}
+                    data={produtosRecontar}
                     renderItem={renderItem}
                     keyExtractor={item => item.barcodescanned}
                     onRefresh={buscaItens}
@@ -234,4 +225,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default CenaRecebimentoFornecedoresItensPeso;
+export default CenaRecebimentoFornecedoresItensRecontar;

@@ -20,7 +20,7 @@ import COLORS from '@constants/colors';
 export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation }) {
 
     const dispatch = useDispatch();
-    const { cod_agrupador } = route.params;
+    const { cod_agrupador, type } = route.params;
     const my_collections = useSelector(state => state.appReducer.my_collections);
     const last_scan = useSelector(state => state.appReducer.last_scan);
     const is_finishing = useSelector(state => state.appReducer.is_finishing_collection);
@@ -31,7 +31,16 @@ export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation 
 
     const componentDidMount = () => {
 
-        let _collection = my_collections.filter((item)=>{
+        let _collection_type = my_collections.filter((item)=>{
+            return item.type == type;
+        });
+        
+        if ( _collection_type.length == 0 ){ 
+            navigation.dispatch(StackActions.pop(1));
+            return true;
+        }
+
+        let _collection = _collection_type[0].data.filter((item)=>{
             return item.cd_codagrupador == cod_agrupador;
         });
 
@@ -80,6 +89,16 @@ export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation 
             });
             AsyncStorage.setItem('scanned', JSON.stringify(scannedItems));
         }
+    
+        let missin_on_invoice = await AsyncStorage.getItem('missin_on_invoice');
+
+        if ( missin_on_invoice != null ) {
+            missin_on_invoice = JSON.parse(missin_on_invoice);
+            missin_on_invoice = missin_on_invoice.filter((miv)=>{
+                return miv.cd_codagrupador != cod_agrupador;
+            });
+            AsyncStorage.setItem('missin_on_invoice', JSON.stringify(missin_on_invoice));
+        }        
 
         dispatch({
             type: 'REGISTER_LAST_SCAN',
@@ -140,12 +159,36 @@ export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation 
             return false;
         }
 
+        
+
+        let produtosForaDaColetagem = await AsyncStorage.getItem('missin_on_invoice');
+
+        if ( produtosForaDaColetagem == null ) {
+            produtosForaDaColetagem = [];
+    
+        } else {
+            produtosForaDaColetagem = JSON.parse(produtosForaDaColetagem);
+
+            produtosForaDaColetagem = produtosForaDaColetagem.filter((miv)=>{
+                return miv.cd_codagrupador = cod_agrupador;
+            })
+
+            if ( produtosForaDaColetagem.length == 0 ) {
+                produtosForaDaColetagem = [];                
+            } else {
+                produtosForaDaColetagem = produtosForaDaColetagem[0].itens;
+            }
+    
+        }
+
         dispatch({
             type: 'FINISH_COLLECTION',
             payload: {
                 data: {
+                    itens_to_save: produtosForaDaColetagem,
                     itens: scannedItems[0].itens,
-                    cd_codagrupador: cod_agrupador
+                    cd_codagrupador: cod_agrupador,
+                    type: type
                 },
                 callback_success: async () => {
 
@@ -172,7 +215,7 @@ export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation 
 	React.useEffect(() => {	
 		componentDidMount();
 
-	}, []);
+	}, [my_collections]);
 
 	React.useEffect(() => {	
 		loadScannedData();
@@ -209,6 +252,8 @@ export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation 
 
             <View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'center'}]}>
 
+                {type == 'coletagens' && 
+                <>
                 <View style={styles.innerSpace}>
                     <Button
                         icon={
@@ -241,12 +286,12 @@ export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation 
                     <Button
                         icon={
                             <View style={{marginRight: 20}}>
-                            <Icon
-                            name="balance-scale"
-                            size={20}
-                            type='font-awesome'
-                            iconStyle={{color: COLORS.secondary}}
-                            />
+                                <Icon
+                                    name="balance-scale"
+                                    size={20}
+                                    type='font-awesome'
+                                    iconStyle={{color: COLORS.secondary}}
+                                />
                             </View>
                         }
                         disabled={collection.length == 0}
@@ -292,6 +337,37 @@ export default function CenaRecebimentoFornecedoresDetalhe ({ route, navigation 
                         }}
                     />
                 </View>
+                </>
+                }
+                {type == 'recontagens' &&
+                <View style={styles.innerSpace}>
+                    <Button
+                        icon={
+                            <View style={{marginRight: 20}}>
+                                <Icon
+                                    name="list"
+                                    size={20}
+                                    type='font-awesome'
+                                    iconStyle={{color: COLORS.secondary}}
+                                />
+                            </View>
+                        }
+                        disabled={collection.length == 0}
+                        titleStyle={{}}
+                        buttonStyle={{borderRadius: 25, paddingVertical: 10, backgroundColor: COLORS.primary}}
+                        title="Produtos a serem recontados"
+                        onPress={() => { 
+                            navigation.dispatch(
+                                CommonActions.navigate('RecebimentoFornecedoresItensRecontar', {
+                                    itens: collection.itens,
+                                })
+                            );
+
+                        }}
+                    />
+                </View>
+                }
+
                 <View style={styles.innerSpace}>
                     <Button
                         icon={

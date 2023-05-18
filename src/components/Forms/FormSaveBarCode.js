@@ -33,7 +33,7 @@ export const FormSaveBarCode = (props) => {
     const [productName, setProductName] = useState("");
     const [goodMinValidity, setGoodMinValidity] = useState("");
     const backToScanner = props.backToScanner;
-    const itens = props.itens;
+    let itens = props.itens;
 
     let db_table = "CODIGOS_AVULSOS";
 
@@ -183,7 +183,7 @@ export const FormSaveBarCode = (props) => {
             AlertHelper.show(
                 'error',
                 'Erro',
-                'Ocorreu um errro ao contar os dados',
+                'Ocorreu um erro ao contar os dados',
             );
         }
     };
@@ -244,6 +244,7 @@ export const FormSaveBarCode = (props) => {
                 const internal_codes_goods = good.map((_good) => {
                     return _good.cd_codigoint;
                 });
+
 
                 let item = itens.filter((_item) => {
                     return inArray(internal_codes_goods, _item.cd_codigoint);
@@ -436,7 +437,7 @@ export const FormSaveBarCode = (props) => {
         try {
 
             let scannedItems = await AsyncStorage.getItem('scanned');
-    
+   
             //monta a array do produto
             let item_item_save = [{
                 cd_id: file_register.cd_id,
@@ -499,7 +500,7 @@ export const FormSaveBarCode = (props) => {
                 
                 //se não achou a coletagem atual, cria um registro pra ela
                 } else {
-                    scannedItems.push(item_save);
+                    scannedItems.push(item_save[0]);
 
                 }
     
@@ -547,6 +548,105 @@ export const FormSaveBarCode = (props) => {
         console.log('produto fora dos padrões de validade');
         return false;
     };
+
+    const async_confirm = async (message) => {
+    
+        // exibe a mensagem de confirmação para o usuário
+        const confirmado = await new Promise((resolve, reject) => {
+          Alert.alert(
+            'Confirmação',
+            message,
+            [
+              {
+                text: 'Cancelar',
+                onPress: () => resolve(false),
+                style: 'cancel',
+              },
+              {
+                text: 'Confirmar',
+                onPress: () => resolve(true),
+              },
+            ],
+            { cancelable: false }
+          );
+        });
+        
+        return confirmado;
+    }
+
+    const _addProductToList = async(ean) => {    
+
+        let goods = await AsyncStorage.getItem('goods');
+
+        const good = JSON.parse(goods).filter((_good) => {
+            return _good.cd_codigoean == ean;
+        });
+
+        if ( good.length == 0 ) {
+
+            AlertHelper.show(
+                'error',
+                'Atenção!',
+                'O produto ' + ean + ' não existe na lista de mercadorias.',
+            );
+            return false;
+        }
+
+        let missin_on_invoice = await AsyncStorage.getItem('missin_on_invoice');
+
+        if ( missin_on_invoice == null ) {
+            missin_on_invoice = [{
+                cd_codagrupador: itens[0]['cd_codagrupador'],
+                itens: []
+            }];
+    
+        } else {
+            missin_on_invoice = JSON.parse(missin_on_invoice);
+
+            missin_on_invoice = missin_on_invoice.filter((miv)=>{
+                return miv.cd_codagrupador = itens[0]['cd_codagrupador'];
+            })
+
+            if ( missin_on_invoice.length == 0 ) {
+                missin_on_invoice = [{
+                    cd_codagrupador: itens[0]['cd_codagrupador'],
+                    itens: []
+                }];                
+            }
+    
+        }
+
+        let itemToAdd = {
+            "bl_controle_validade": itens[0]['bl_controle_validade'], 
+            "bl_divergencia": itens[0]['bl_divergencia'], 
+            "bl_mercadoria_ausente": itens[0]['bl_mercadoria_ausente'], 
+            "cd_chave": itens[0]['cd_chave'], 
+            "cd_codagrupador": itens[0]['cd_codagrupador'], 
+            "cd_codigoemit": itens[0]['cd_codigoemit'], 
+            "cd_codigoint": good[0]['cd_codigoint'], 
+            "cd_id": null, 
+            "cd_loja": itens[0]['cd_loja'], 
+            "cd_nronota": itens[0]['cd_nronota'], 
+            "cd_serie": itens[0]['cd_serie'], 
+            "cd_status": itens[0]['cd_status'], 
+            "dt_validade": itens[0]['dt_validade'], 
+            "fornecedor_nome_fantasia": itens[0]['fornecedor_nome_fantasia'], 
+            "loja_nome_fantasia": itens[0]['loja_nome_fantasia'], 
+            "nr_linha": null, 
+            "qt_divergencia": itens[0]['qt_divergencia'], 
+            "qt_qtde": 0, 
+            "qt_qtde_nt": 0, 
+            "ultatu": itens[0]['ultatu'], 
+            "us_login": itens[0]['us_login'],
+            "cd_ean": ean
+        }
+
+        missin_on_invoice[0].itens.push(itemToAdd);
+
+        await AsyncStorage.setItem('missin_on_invoice',JSON.stringify(missin_on_invoice));
+
+        return itemToAdd;
+    }
 
     _contaItens(props.barcodescanned);
 
@@ -625,13 +725,22 @@ export const FormSaveBarCode = (props) => {
 
             barcode_exists = await _checkCodeExistsInStore(bcs);
             
+            //produto não existe na lista de coletagem
             if ( !barcode_exists ) {
-                AlertHelper.show(
-                    'info',
-                    'Atenção!',
-                    'O produto ' + bcs + ' não existe na lista de coletagem',
-                );
-                return false;
+                const confirm_add_product = await async_confirm('O produto ' + bcs + ' não existe na lista de coletagem, deseja adicioná-lo?');
+                if ( !confirm_add_product ) {
+
+                    return false;
+                } else {
+
+                    const addProductToList = await _addProductToList(bcs);
+
+                    if ( !addProductToList ) {
+                        return false;
+                    }
+
+                    barcode_exists = addProductToList;
+                }
 
             }
 

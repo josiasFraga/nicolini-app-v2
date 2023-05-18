@@ -18,6 +18,7 @@ import CenaLoja from '@scenes/CenaLoja';
 import CenaDeposito from '@scenes/CenaDeposito';
 import CenaRecebimentoFornecedoresItensEscaneados from '@scenes/CenaRecebimentoFornecedoresItensEscaneados';
 import CenaRecebimentoFornecedoresItensPeso from '@scenes/CenaRecebimentoFornecedoresItensPeso';
+import CenaRecebimentoFornecedoresItensRecontar from '@scenes/CenaRecebimentoFornecedoresItensRecontar';
 
 import ListaColetagens from '@scenes/ListaColetagens';
 
@@ -49,6 +50,7 @@ class Routes extends React.Component {
         <Stack.Screen name="ListaColetagens" component={ListaColetagens} />
         <Stack.Screen name="RecebimentoFornecedoresItensEscaneados" component={CenaRecebimentoFornecedoresItensEscaneados} />
         <Stack.Screen name="CenaRecebimentoFornecedoresItensPeso" component={CenaRecebimentoFornecedoresItensPeso} />
+        <Stack.Screen name="RecebimentoFornecedoresItensRecontar" component={CenaRecebimentoFornecedoresItensRecontar} />
       </Stack.Navigator>
     </NavigationContainer>
     )

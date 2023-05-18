@@ -475,10 +475,17 @@ function* finishCollection({payload}) {
 	let dados = payload.data;
 
 	data.append('dados', JSON.stringify(dados));
+	
+	let endpoint = CONFIG.url+'/recebidos/finaliza.json';
+
+	if ( payload.data.type == 'recontagens' ){	
+		endpoint = CONFIG.url+'/recontagem/finaliza.json';
+
+	}
 
 	try {
 		const response = yield call(callApi, { 
-			endpoint: CONFIG.url+'/recebidos/finaliza.json',
+			endpoint: endpoint,
 			method: 'POST',
 			data: data,
 			headers: {
@@ -552,7 +559,7 @@ function* loadGoods({payload}) {
 	
 			}
 		} else {
-			yield AlertHelper.show('error', 'Erro', response.data.msg);
+			yield AlertHelper.show('error', 'Erro ao buscar as mercadorias', JSON.stringify(response.data));
 			yield put({
 				type: 'LOAD_GOODS_FAILED',
 				payload: {},
@@ -566,7 +573,7 @@ function* loadGoods({payload}) {
 			type: 'LOAD_GOODS_FAILED',
 			payload: {},
 		});
-		yield AlertHelper.show('error', 'Erro', message);
+		yield AlertHelper.show('error', 'Erro ao buscar as mercadorias', JSON.stringify(response));
 	}
 	
 

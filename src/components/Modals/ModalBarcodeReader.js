@@ -17,9 +17,9 @@ export default function ModalBarcodeReader(props) {
   const [typeEntreBarcode, setTypeEntreBarcode] = useState(1);
   const [flashMode, setFlashMode] = useState(1);
   const [tipoLeitura, setTipoLeitura] = useState("");
-  const itens = props.route.params.itens; 
   const setEanRead = props.route.params.setEanRead; 
   const callbackSuccess = props.route.params.callbackSuccess;
+  const itens = props.route.params.itens;
 
   useEffect(() => {
     if ( setEanRead && !scanned ) {

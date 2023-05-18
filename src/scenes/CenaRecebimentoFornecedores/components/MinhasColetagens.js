@@ -2,7 +2,7 @@ import React from 'react';
 import {
 	StyleSheet,
 	View,
-    FlatList
+    SectionList
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import GlobalStyle from '@styles/global';
@@ -30,10 +30,11 @@ function MinhasColetagens (props) {
 
 	}, []);
 
-    const collectionDetail = (cod_agrupador) => {        
+    const collectionDetail = (cod_agrupador, type) => {        
         navigation.dispatch(
             CommonActions.navigate('CenaRecebimentoFornecedoresDetalhe', {
                 cod_agrupador: cod_agrupador,
+                type: type,
             })
         );
 
@@ -41,8 +42,9 @@ function MinhasColetagens (props) {
 
     const RenderItem = (props) => {
         const collection = props.item;
+        const type = props.type;
         return (
-            <ListItem key={collection.cd_codagrupador} bottomDivider onPress={() => collectionDetail(collection.cd_codagrupador)}>
+            <ListItem key={collection.cd_codagrupador} bottomDivider onPress={() => collectionDetail(collection.cd_codagrupador, type)}>
                 <ListItem.Content>
                   <ListItem.Title>Fornecedor: {collection.fornecedor_nome_fantasia}</ListItem.Title>
                   <ListItem.Subtitle>Cód Agrupador: {collection.cd_codagrupador}</ListItem.Subtitle>
@@ -60,10 +62,13 @@ function MinhasColetagens (props) {
 		<View style={styles.container}>
 
 			<View style={GlobalStyle.secureMargin}>
-                <FlatList
-                    data={collections}
-                    renderItem={({item}) => <RenderItem item={item} />}
-                    keyExtractor={item => item.cd_codagrupador}
+                <SectionList
+                    sections={collections}
+                    renderItem={({item,section}) => <RenderItem item={item} type={section.type} />}
+                    renderSectionHeader={({section: {title}}) => {
+                        return <Text style={{fontWeight: 'bold'}}>{title}</Text>
+                    }}
+                      keyExtractor={(item, index) => item + index}
                     onRefresh={() => {
                         loadItems();
                     }}
@@ -73,9 +78,6 @@ function MinhasColetagens (props) {
                             return null;
                         }
                         return <Text>Nenhuma coletagem aberta</Text>
-                    }}
-                    ListHeaderComponent={()=>{
-                        return <Text>Suas Coletagens</Text>
                     }}
                 />
 			</View>
