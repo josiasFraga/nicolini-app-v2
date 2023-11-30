@@ -43,6 +43,7 @@ function* registerDevice({payload}) {
 		console.log('[SAGA] - [REGISTRANDO DISPOSITIVO]', response);
 
 		if ( response.data.status == 'ok' ) {
+			console.log('OK - dispositivo registrado');
 		} else {
 			AlertHelper.show('error', 'Erro', response.data.message);
 		}
@@ -556,6 +557,7 @@ function* loadGoods({payload}) {
 					type: 'LOAD_GOODS_FAILED',
 					payload: {},
 				});
+				console.error('Erro ao buscar as mercadorias');
 	
 			}
 		} else {
@@ -580,6 +582,70 @@ function* loadGoods({payload}) {
 
 }
 
+function* loadSplits({payload}) {
+
+	console.log('carregando produtos da separação central');
+
+	const networkStatus = yield NetInfo.fetch();
+	
+	//SEM INTERNET, NÃO ATUALIZA A LISTA DE MERCADORIAS
+	if ( !networkStatus.isConnected ) {
+		return true;
+
+	}
+
+	try {
+		const response = yield call(callApi, {
+			endpoint: CONFIG.url + '/separacao-central/index.json',
+			method: 'GET',
+			params: payload.submitValues
+		});
+
+		if (response.status == 200) {
+			if (response.data.status == 'ok') {
+				yield put({
+				  type: 'LOAD_SPLITS_SUCCESS',
+				  payload: response.data.data,
+				});
+				console.log('Busca de separação ok');
+	
+			} else {
+				yield AlertHelper.show('error', 'Erro', response.data.msg);
+				yield put({
+					type: 'LOAD_SPLITS_FAILED',
+					payload: {},
+				});
+				console.error('Erro ao buscar as separações');
+	
+			}
+			
+
+			payload.setSubmitting(false);
+		} else {
+			yield AlertHelper.show('error', 'Erro ao buscar as separações', JSON.stringify(response.data));
+			yield put({
+				type: 'LOAD_SPLITS_FAILED',
+				payload: {},
+			});
+
+			payload.setSubmitting(false);
+
+		}
+
+	} catch ({message, response}) {
+		console.warn('[ERROR : LOAD SPLITS]', {message, response});
+		yield put({
+			type: 'LOAD_SPLITS_FAILED',
+			payload: {},
+		});
+		payload.setSubmitting(false);
+		yield AlertHelper.show('error', 'Erro ao buscar as separações', JSON.stringify(response));
+	}
+	
+
+
+}
+
 function* registerLastScan({payload}) {
 	const currentDate = new Date();
 	yield put({
@@ -588,6 +654,189 @@ function* registerLastScan({payload}) {
 	});
 	console.log('[SAGA] last scan atualizado ' + currentDate);
 
+}
+
+function* loadStores({payload}) {
+
+	console.log('carregando lojas');
+
+	const networkStatus = yield NetInfo.fetch();
+	
+	//SEM INTERNET, NÃO ATUALIZA A LISTA DE MERCADORIAS
+	if ( !networkStatus.isConnected ) {
+		return true;
+
+	}
+
+	//TEM INTERNET, BUSCANDO OS DADOS ONLINE
+	try {
+		const response = yield call(callApi, {
+			endpoint: CONFIG.url + '/lojas/index.json',
+			method: 'GET'
+		});
+
+		if (response.status == 200) {
+			if (response.data.status == 'ok') {
+				yield put({
+				  type: 'LOAD_STORES_SUCCESS',
+				  payload: response.data.data,
+				});
+				console.log('Busca de lojas ok');
+	
+			} else {
+				yield AlertHelper.show('error', 'Erro', response.data.msg);
+				yield put({
+					type: 'LOAD_STORES_FAILED',
+					payload: {},
+				});
+				console.error('Erro ao buscar as lojas');
+	
+			}
+		} else {
+			yield AlertHelper.show('error', 'Erro ao buscar as lojas', JSON.stringify(response.data));
+			yield put({
+				type: 'LOAD_STORES_FAILED',
+				payload: {},
+			});
+
+		}
+
+	} catch ({message, response}) {
+		console.warn('[ERROR : LOAD STORES]', {message, response});
+		yield put({
+			type: 'LOAD_STORES_FAILED',
+			payload: {},
+		});
+		yield AlertHelper.show('error', 'Erro ao buscar as lojas', JSON.stringify(response));
+	}
+	
+
+
+}
+
+function* startSplit({payload}) {
+
+	const networkStatus = yield NetInfo.fetch();
+	
+	if ( !networkStatus.isConnected ) {
+		yield AlertHelper.show(
+			'warn',
+			'Sem conexão',
+			'Você só pode iniciar uma separação quando seu dispositivo quando estiver com internet.',
+		  );
+		  return true;
+	}
+
+	console.log('[SAGA] - COMEÇANDO SEPARAÇÃO');
+	
+	let data = new FormData();
+	let dados = payload.submitValues;
+
+	console.log(dados);
+
+	data.append('dados', JSON.stringify(dados));
+
+	try {
+		const response = yield call(callApi, { 
+			endpoint: CONFIG.url+'/separacao-central/start.json',
+			method: 'POST',
+			data: data,
+			headers: {
+				'content-type': 'multipart/form-data',
+			},
+		});
+
+		console.log(response.data);
+		console.log(response.data.status);
+
+		//console.log('[SAGA] - [COMEÇANDO SEPARAÇÃO]', response);
+
+		if ( response.data.status === 'ok' ) {
+			yield put({
+				type: 'START_SPLIT_SUCCESS',
+				payload: true,
+			});
+
+			yield payload.setSubmitting(false);
+			yield AsyncStorage.setItem('my_splits', JSON.stringify(response.data.data));
+			yield payload.callback_success();
+			
+			AlertHelper.show('success', 'Tudo Certo', 'Separação iniciada com sucesso!');
+	
+		} else {
+			AlertHelper.show('error', 'Error', response.data.message);
+			yield put({
+				type: 'START_SPLIT_FAILED',
+				payload: true,
+			});
+			yield payload.setSubmitting(false);
+
+		}
+
+	} catch ({message, response}) {
+		console.error('[SAGA] - [COMEÇANDO SEPARAÇÃO]', { message, response });
+		AlertHelper.show('error', 'Erro', message);
+		yield put({
+			type: 'START_SPLIT_FAILED',
+			payload: true,
+		});
+		yield payload.setSubmitting(false);
+	}
+}
+
+function* endSplit({payload}) {
+
+	const networkStatus = yield NetInfo.fetch();
+	
+	if ( !networkStatus.isConnected ) {
+		yield AlertHelper.show(
+			'warn',
+			'Sem conexão',
+			'Você só pode finalizar uma separação quando seu dispositivo quando estiver com internet.',
+		  );
+		  return true;
+	}
+
+	console.log('[SAGA] - FINALIZANDO SEPARAÇÃO');
+	
+	let data = new FormData();
+	let dados = payload.submitValues;
+
+	console.log('dados');
+	console.log(dados);
+
+	data.append('dados', JSON.stringify(dados));
+
+	try {
+		const response = yield call(callApi, { 
+			endpoint: CONFIG.url+'/separacao-central/end.json',
+			method: 'POST',
+			data: data,
+			headers: {
+				'content-type': 'multipart/form-data',
+			},
+		});		
+
+		console.log('[SAGA] - [FINALIZANDO SEPARAÇÃO]', response);
+
+		if ( response.data.status === 'ok' ) {
+
+			yield payload.setSubmitting(false);
+			yield AsyncStorage.removeItem('my_splits');
+			yield payload.callback_success();
+			
+			AlertHelper.show('success', 'Tudo Certo', 'Separação finalizada com sucesso!');
+	
+		} else {
+			AlertHelper.show('error', 'Error', response.data.message);
+			yield payload.setSubmitting(false);
+		}
+
+	} catch ({message, response}) {
+		console.error('[SAGA] - [FINALIZANDO SEPARAÇÃO]', { message, response });
+		AlertHelper.show('error', 'Erro', message);
+		yield payload.setSubmitting(false);
+	}
 }
 
 export default function* () {
@@ -602,5 +851,8 @@ export default function* () {
 	yield takeLatest('LOAD_GOODS', loadGoods);
 	yield takeLatest('REGISTER_LAST_SCAN', registerLastScan);
 	yield takeLatest('FINISH_COLLECTION', finishCollection);
-	
+	yield takeLatest('LOAD_STORES', loadStores);
+	yield takeLatest('LOAD_SPLITS', loadSplits);
+	yield takeLatest('START_SPLIT', startSplit);
+	yield takeLatest('END_SPLIT', endSplit);
 }

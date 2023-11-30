@@ -19,7 +19,7 @@ import COLORS from '@constants/colors';
 const LoginSchema = yup.object().shape({
 	user: yup.string().required('Usuário é obrigatório'),
 	password: yup.string().required('Senha é obrigatória'),
-  });
+});
 
 export default function CenaLogin(props) {
 	const dispatch = useDispatch();
@@ -78,7 +78,6 @@ export default function CenaLogin(props) {
 			})
 		},
 	});
-
 
     return (
         <View style={styles.container}>

@@ -1,11 +1,9 @@
 import React from 'react';
-import {StyleSheet, TextInput, View, Text, Picker} from 'react-native';
-
-import COLORS from '@constants/colors';
+import {StyleSheet, View, Text} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
 import GlobalStyle from '@styles/global';
 
-type Props = {};
-export default class FieldPicker extends React.Component<Props> {
+export default class FieldPicker extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -34,19 +32,10 @@ export default class FieldPicker extends React.Component<Props> {
     //const { input, ...inputProps } = props;
     const {isFocused} = this.state;
     const {
-      placeholder,
-      labelText,
-      labelStyle,
-      keyboardType,
-      maxLength,
-      multiline,
-      returnKeyType,
-      refField,
-      onEnter,
-      input: {onChange, name, onBlur, onFocus, value, ...inputProps},
-      meta,
-      pickerProps,
-      children,
+      field, 
+      form, 
+      enabled,
+      ...inputProps
     } = this.props;
     const formStates = [
       'active',
@@ -62,19 +51,29 @@ export default class FieldPicker extends React.Component<Props> {
       'error',
     ];
 
+    let _enabled = true;
+    if ( typeof enabled != 'undefined' && !enabled )
+      _enabled = false;
+
+    const {value} = field;
+    const {onChange} = this.props;
     return (
-      <View style={[styles.inputContainer, styles.input]}>
-        <Picker
-          selectedValue={value}
-          onValueChange={value => onChange(value)}
-          mode="dialog"
-          {...inputProps}
-          {...pickerProps}>
-          {children}
-        </Picker>
-        {meta.touched &&
-          (meta.error && (
-            <Text style={[GlobalStyle.errorValidation]}>{meta.error}</Text>
+      <View style={styles.inputContainer}>
+        <View style={styles.input}>
+          <Picker
+            selectedValue={value}
+            mode="dialog"
+            onValueChange={value => { 
+              onChange(value)
+              form.setFieldValue(field.name, value);
+            }}
+            enabled={_enabled}
+            {...inputProps}>
+          </Picker>
+        </View>
+        {form.touched[field.name] &&
+          (form.errors[field.name] && (
+            <Text style={[GlobalStyle.errorValidation]}>{form.errors[field.name]}</Text>
           ))}
       </View>
     );
@@ -84,23 +83,16 @@ export default class FieldPicker extends React.Component<Props> {
 const styles = StyleSheet.create({
   inputContainer: {
     flex: 1,
+    marginBottom: 20,
+    paddingVertical: 0
   },
   input: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    borderWidth: 0,
     flex: 1,
-    marginLeft: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 10.84,
-    elevation: 4,
+    marginLeft: 3,
+    marginRight: 3,
     color: '#315a79',
     fontSize: 20,
-    paddingHorizontal: 15,
+    paddingVertical: 0,
+    borderBottomWidth: 0.7
   },
 });

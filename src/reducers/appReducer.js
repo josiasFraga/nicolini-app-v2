@@ -27,7 +27,12 @@ const INITIAL_STATE = {
   invert_collection_data: {
     n_itens: 0,
     n_uniqe_itens: 0,
-  }
+  },
+  splits: [],
+  is_loading_splits: false,
+
+  stores: [],
+  is_sotres_loading: false
 };
 
 export const appReducer = (state = INITIAL_STATE, action) => {
@@ -81,6 +86,20 @@ export const appReducer = (state = INITIAL_STATE, action) => {
 		return {...state, central_collection_data: action.payload};
     case 'SET_INVERT_COLLECTION_DATA':
 		return {...state, invert_collection_data: action.payload};
+  
+    case 'LOAD_SPLITS':
+		return {...state, is_loading_splits: true, splits: []};
+    case 'LOAD_SPLITS_SUCCESS':
+		return {...state, is_loading_splits: false, splits: action.payload };
+    case 'LOAD_SPLITS_FAILED':
+		return {...state, is_loading_splits: false, splits: []};
+  
+    case 'LOAD_STORES':
+		return {...state, is_sotres_loading: true, stores: []};
+    case 'LOAD_STORES_SUCCESS':
+		return {...state, is_sotres_loading: false, stores: action.payload };
+    case 'LOAD_STORES_FAILED':
+		return {...state, is_sotres_loading: false, stores: []};
   
     case 'SET_LAST_SCAN':
 		return {...state, last_scan: action.payload};

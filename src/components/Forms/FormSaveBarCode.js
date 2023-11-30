@@ -57,19 +57,22 @@ export const FormSaveBarCode = (props) => {
 
                 setGoodMinValidity("");
                 try {
-                    const value = await AsyncStorage.getItem('UPLOADED_FILE_CENTRAL_COLLECTION');
+                    console.log('Buscando nome do produto');
+                    const value = await AsyncStorage.getItem('my_splits');
         
                     if (value !== null) {
-                    let produtos = JSON.parse(value);
+                    let separacoes = JSON.parse(value);
         
-                    const product = produtos.filter((produto) => {
-                        return produto.cod_barras == props.barcodescanned;
+                    const separacao = separacoes.filter((separacao) => {
+                        return separacao.ean == props.barcodescanned;
                     })
+
+                    console.log(separacao);
         
-                    if ( product.length == 0 ) {
+                    if ( separacao.length == 0 ) {
                         setProductName("");
                     } else {
-                        setProductName(product[0]["produto"]);
+                        setProductName(separacao[0]['mercadoria']['tx_descricao']);
                     }                  
                     
             
@@ -142,6 +145,25 @@ export const FormSaveBarCode = (props) => {
     let _contaItens = async (code) => {
 
         let nitens = 0;
+
+        
+        if ( db_table == 'CODIGOS_CENTRAL' ) {
+            console.log('... Buscando quantidade coletada');
+            const value = await AsyncStorage.getItem('my_splits');
+            let produtos = JSON.parse(value);
+
+            const product = produtos.filter((produto) => {
+                return produto.ean == code;
+            });
+
+            if ( product.length == 0 ) {
+                console.info('... Produto não encotrado');
+                return false;
+            }
+
+            setNItens(product[0]._qtd_coletada);
+            return false;
+        }
 
         if ( db_table == 'CODIGOS_RECEBIMENTO_FORNECEDORES' ) {
             let scannedItems = await AsyncStorage.getItem('scanned');
@@ -228,6 +250,41 @@ export const FormSaveBarCode = (props) => {
 
     const _checkCodeExistsInStore = async (bar_code) => {
         try {
+            if ( props.origin && props.origin == "separacao_central") {
+                store_name = "my_splits";
+            }
+    
+          const value = await AsyncStorage.getItem(store_name);
+
+          if (value !== null) {
+            let produtos = JSON.parse(value);
+
+            const product = produtos.filter((produto) => {
+                return produto.ean == bar_code;
+            })
+
+            if ( product.length == 0 ) {
+                return false;
+            }
+
+            return product[0];
+     
+          } else {
+            return false;
+          }
+        } catch (error) {
+            console.log(error);
+            AlertHelper.show(
+                'error',
+                'Erro',
+                'Ocorreu um errro ao ler os dados da separação. [ARMAZENAMENTO INTERNO]',
+            );
+            return false;
+        }
+    };
+
+    const _checkCodeExistsInGoods = async (bar_code) => {
+        try {
 
             let goods = await AsyncStorage.getItem('goods');
 
@@ -271,7 +328,7 @@ export const FormSaveBarCode = (props) => {
         }
     };
 
-    const _checkQtdInFile = async (read_product, bar_code, qtd) => {
+    const _checkQtdInStore = async (read_product, bar_code, qtd) => {
         try {
           const value = await AsyncStorage.getItem(db_table);
           let qtd_collected = 0;
@@ -281,12 +338,12 @@ export const FormSaveBarCode = (props) => {
 
             //procura o codigo de barras nos produtos  ja lidos para verificar a quantidade
             const product_collected = produtos.filter((produto) => {
-                return produto.barcodescanned == bar_code;
+                return produto.ean == bar_code;
             });
 
             //se achou, significa que o operador ja leu, ai setamos aquantidade lida para comparar com o arquivo
             if ( product_collected.length > 0 ) {
-                qtd_collected = product_collected[0].qtd;
+                qtd_collected = product_collected[0].Quantidade;
             }
 
      
@@ -534,6 +591,74 @@ export const FormSaveBarCode = (props) => {
 
     };
 
+    let _storeDataSeparacao = async (qtd, store_register) => {
+        try {
+
+            const value = await AsyncStorage.getItem('my_splits');
+            let codigos = [];
+            const qtd_digitada = qtd;
+            let stop_code = false;
+
+            if (value === null) {
+                AlertHelper.show(
+                    'error',
+                    'Erro',
+                    'Não conseguimos ler os dados da separação [ARMAZENAMENTO INTERNO]',
+                );        
+                return false;
+            } else {
+                codigos = JSON.parse(value);
+            }
+
+            if ( !store_register._qtd_coletada ) {
+                store_register._qtd_coletada = 0;
+
+            }
+
+            codigos = codigos.map((item_lista) => {
+
+                if ( item_lista.ean == store_register.ean ) {
+
+                    const new_qtd = item_lista._qtd_coletada + parseFloat(qtd_digitada);
+    
+                    if (  new_qtd < 0 ) {
+                        AlertHelper.show(
+                            'warning',
+                            'Atenção',
+                            'A quantidade não pode ser inferior a 0',
+                        );
+                        stop_code = true;
+                    }
+    
+                    item_lista._qtd_coletada = new_qtd;
+
+                }
+                return item_lista;
+            });
+    
+            if ( stop_code ) {
+                return false;
+            }
+
+            await AsyncStorage.setItem(
+                'my_splits',
+                JSON.stringify(codigos)
+            );
+
+            props.setSaved();
+
+           
+        } catch (error) {
+            console.log(error);
+            AlertHelper.show(
+                'error',
+                'Erro',
+                'Ocorreu um errro ao salvar',
+            );
+        }
+
+    };
+
     let _checkValidity = async (productValidity) => {
 
         productValidity = parse(productValidity, 'dd/MM/yyyy', new Date());
@@ -683,7 +808,7 @@ export const FormSaveBarCode = (props) => {
          let ckValidity = true;
 
          if ( db_table == "CODIGOS_CENTRAL") {
-            file_exists = await _checkCodeExistsInFile(bcs);
+            file_exists = await _checkCodeExistsInStore(bcs);
             if ( !file_exists ) {
 
                 AlertHelper.show(
@@ -694,19 +819,24 @@ export const FormSaveBarCode = (props) => {
                 return false;
 
             }
-            const check_qtd = await _checkQtdInFile(file_exists,bcs,values.qtd);
+            const check_qtd = await _checkQtdInStore(file_exists,bcs,values.qtd);
 
             if ( check_qtd !== false ) {
     
                 AlertHelper.show(
                     'info',
                     'Atenção!',
-                    'O produto ' + bcs + ' | ' + file_exists.produto + ' excede o limite de ' + Math.floor(check_qtd) + ' itens',
+                    'O produto ' + bcs + ' | ' + productName + ' excede o limite de ' + Math.floor(check_qtd) + ' itens',
                 );
                 return false;
 
             }
+
+            _storeDataSeparacao(values.qtd, file_exists);
+
+            return false;
          }
+    
          if ( db_table == "CODIGOS_INVERT") {
             file_exists = await _checkCodeExistsInFile(bcs);
             if ( !file_exists ) {
@@ -721,9 +851,10 @@ export const FormSaveBarCode = (props) => {
             }
 
          }
+
          if ( db_table == "CODIGOS_RECEBIMENTO_FORNECEDORES") {
 
-            barcode_exists = await _checkCodeExistsInStore(bcs);
+            barcode_exists = await _checkCodeExistsInGoods(bcs);
             
             //produto não existe na lista de coletagem
             if ( !barcode_exists ) {
