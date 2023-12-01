@@ -12,6 +12,7 @@ import { CommonActions } from '@react-navigation/native';
 import {Text, ListItem, SearchBar } from 'react-native-elements';
 import GlobalStyle from '@styles/global';
 import Header from '@components/Header';
+import RNFS from 'react-native-fs';
 
 import COLORS from '@constants/colors';
 
@@ -23,8 +24,26 @@ export function CenaRecebimentoFornecedoresItensRecontar (props) {
     
     const { itens } = props.route.params;
 
+    // função auxiliar para ler dados de um arquivo
+    const readGoodsFromFile = async () => {
+        const filePath = RNFS.DocumentDirectoryPath + '/goods.json';
+        try {
+            const fileExists = await RNFS.exists(filePath);
+            if (fileExists) {
+            const fileContents = await RNFS.readFile(filePath);
+            return JSON.parse(fileContents);
+            } else {
+            console.log('Arquivo não encontrado.');
+            return null;
+            }
+        } catch (error) {
+            console.error('Erro ao ler o arquivo:', error);
+            return null;
+        }
+    }
+
     const buscaProdutos = async () => {
-        const goods = await AsyncStorage.getItem('goods');
+        let goods = await readGoodsFromFile();
         return JSON.parse(goods);
 
     }

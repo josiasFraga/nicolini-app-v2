@@ -4,6 +4,18 @@ import {callApi} from '@services/api';
 import AlertHelper from '@components/Alert/AlertHelper';
 import CONFIG from '@constants/configs';
 import NetInfo from "@react-native-community/netinfo";
+import RNFS from 'react-native-fs';
+
+// função auxiliar para salvar dados em um arquivo
+function* saveGoodsToFile(data) {
+	const filePath = RNFS.DocumentDirectoryPath + '/goods.json';
+	try {
+	  yield RNFS.writeFile(filePath, JSON.stringify(data), 'utf8');
+	  console.log('Lista de mercadorias salva no arquivo com sucesso!');
+	} catch (error) {
+	  console.error('Erro ao salvar o arquivo:', error);
+	}
+}
 
 function* registerDevice({payload}) {
 
@@ -549,7 +561,10 @@ function* loadGoods({payload}) {
 				  payload: {},
 				});
 				console.log('Lista de mercadorias atualizada com sucesso!');
-				yield AsyncStorage.setItem('goods', JSON.stringify(response.data.data));
+				//yield AsyncStorage.setItem('goods', JSON.stringify(response.data.data));
+	
+				// Salva os dados no arquivo
+				yield* saveGoodsToFile(response.data.data);
 	
 			} else {
 				yield AlertHelper.show('error', 'Erro', response.data.msg);

@@ -64,7 +64,7 @@ export const CenaSeparacaoCentral = (props) => {
     const dispatch = useDispatch();
     const separacoes = useSelector(state => state.appReducer.splits);
 
-    const [showForm, setShowForm] = useState(false);
+    const [showForm, setShowForm] = useState(true);
     const [mySplits, setMySplits] = useState([]);
     const [nItensLidos, setNItensLidos] = useState(0);
     const [nItensColetados, setNItensColetados] = useState(0);

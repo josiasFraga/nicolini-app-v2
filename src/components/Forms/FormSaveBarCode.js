@@ -11,6 +11,8 @@
  import AlertHelper from '@components/Alert/AlertHelper';
 import { useDispatch } from 'react-redux';
 import { parse, isValid, add  } from 'date-fns';
+import RNFS from 'react-native-fs';
+
 import * as Yup from 'yup';
 
 const inArray = (array, value) => {
@@ -47,6 +49,24 @@ export const FormSaveBarCode = (props) => {
 
     if ( props.origin && props.origin == "recebimento_fornecedores") {
        db_table = "CODIGOS_RECEBIMENTO_FORNECEDORES";
+    }
+
+    // função auxiliar para ler dados de um arquivo
+    const readGoodsFromFile = async () => {
+        const filePath = RNFS.DocumentDirectoryPath + '/goods.json';
+        try {
+            const fileExists = await RNFS.exists(filePath);
+            if (fileExists) {
+            const fileContents = await RNFS.readFile(filePath);
+            return JSON.parse(fileContents);
+            } else {
+            console.log('Arquivo não encontrado.');
+            return null;
+            }
+        } catch (error) {
+            console.error('Erro ao ler o arquivo:', error);
+            return null;
+        }
     }
 
     useEffect(() => {
@@ -116,7 +136,7 @@ export const FormSaveBarCode = (props) => {
 
             if ( db_table == 'CODIGOS_RECEBIMENTO_FORNECEDORES' ) {
 
-                let goods = await AsyncStorage.getItem('goods');
+                let goods = await readGoodsFromFile();
 
                 const good = JSON.parse(goods).filter((_good) => {
                     return _good.cd_codigoean == props.barcodescanned;
@@ -286,7 +306,7 @@ export const FormSaveBarCode = (props) => {
     const _checkCodeExistsInGoods = async (bar_code) => {
         try {
 
-            let goods = await AsyncStorage.getItem('goods');
+            let goods = await readGoodsFromFile();
 
             const good = JSON.parse(goods).filter((_good) => {
                 return _good.cd_codigoean == bar_code;
@@ -701,7 +721,7 @@ export const FormSaveBarCode = (props) => {
 
     const _addProductToList = async(ean) => {    
 
-        let goods = await AsyncStorage.getItem('goods');
+        let goods = await readGoodsFromFile();
 
         const good = JSON.parse(goods).filter((_good) => {
             return _good.cd_codigoean == ean;
