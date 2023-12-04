@@ -349,8 +349,9 @@ export const FormSaveBarCode = (props) => {
     };
 
     const _checkQtdInStore = async (read_product, bar_code, qtd) => {
+
         try {
-          const value = await AsyncStorage.getItem(db_table);
+          const value = await AsyncStorage.getItem('my_splits');
           let qtd_collected = 0;
 
           if (value !== null) {
@@ -363,18 +364,17 @@ export const FormSaveBarCode = (props) => {
 
             //se achou, significa que o operador ja leu, ai setamos aquantidade lida para comparar com o arquivo
             if ( product_collected.length > 0 ) {
-                qtd_collected = product_collected[0].Quantidade;
+                qtd_collected = read_product._qtd_coletada;
             }
 
-     
           } 
 
-          const limit = parseFloat(read_product.qtd);
+          const limit = parseFloat(read_product.QtdOriginal);
           const limit_max = limit + (( 50*limit) / 100 );
           const new_total = parseFloat(qtd_collected) + parseFloat(qtd);
 
           if ( new_total >  limit_max ) {
-              return limit_max;
+                return limit_max;
           }
 
           return false;
