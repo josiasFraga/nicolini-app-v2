@@ -823,11 +823,13 @@ export const FormSaveBarCode = (props) => {
      onSubmit={async (values) => {
 
          let bcs = props.barcodescanned.trim();
+         bcs = bcs.padStart(13, '0');
          let file_exists = {};
          let barcode_exists = {};
          let ckValidity = true;
 
          if ( db_table == "CODIGOS_CENTRAL") {
+
             file_exists = await _checkCodeExistsInStore(bcs);
             if ( !file_exists ) {
 

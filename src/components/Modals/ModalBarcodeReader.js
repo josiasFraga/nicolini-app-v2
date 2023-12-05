@@ -137,7 +137,7 @@ export default function ModalBarcodeReader(props) {
     return (
       <SafeAreaView style={{flex: 1}}>
         <FormSaveBarCode 
-          barcodescanned={barcodescanned} 
+          barcodescanned={barcodescanned.padStart(13, '0')} 
           setSaved={() => {
             setScanned(false);
             if ( callbackSuccess ) {
