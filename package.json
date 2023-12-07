@@ -45,6 +45,7 @@
     "react-native-uuid": "^2.0.1",
     "react-native-vector-icons": "^9.2.0",
     "react-native-view-overflow": "0.0.5",
+    "react-native-vision-camera": "^3.6.13",
     "react-redux": "^7.2.4",
     "redux-form": "^8.3.7",
     "redux-form-input-masks": "^2.0.1",

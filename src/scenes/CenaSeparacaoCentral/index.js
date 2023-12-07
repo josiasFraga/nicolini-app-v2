@@ -352,9 +352,7 @@ export const CenaSeparacaoCentral = (props) => {
 								name: 'ModalBarcodeReader',
 								params: {
 									origin: "separacao_central",
-									callbackSuccess: () => {
-										loadMySplits();
-									}
+									callbackSuccess: loadMySplits
 								},
 							})
 						);

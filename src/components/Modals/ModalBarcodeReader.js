@@ -3,6 +3,7 @@ import { Text, View, SafeAreaView, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button } from 'react-native-elements';
 import { RNCamera } from 'react-native-camera';
+
 import { FormSaveBarCode } from '@components/Forms/FormSaveBarCode';
 import { FromEnterBarcode } from '@components/Forms/FromEnterBarcode';
 import ColectorScreem from './ModalBarcodeReader/ColectorScreem';
@@ -137,7 +138,7 @@ export default function ModalBarcodeReader(props) {
     return (
       <SafeAreaView style={{flex: 1}}>
         <FormSaveBarCode 
-          barcodescanned={barcodescanned.padStart(13, '0')} 
+          barcodescanned={!barcodescanned ? barcodescanned : barcodescanned.padStart(13, '0')} 
           setSaved={() => {
             setScanned(false);
             if ( callbackSuccess ) {

@@ -86,19 +86,19 @@ export default function CenaLogin(props) {
                 backgroundColor={'transparent'}
                 barStyle={'dark-content'}
             />
-            <View style={styles.imageContainer}>
-                <Image source={IMAGES.LOGO} style={{ width: 150, height: 120 }} />
-            </View>
-            <View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'flex-end'}]}>
+			<View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'space-between'}]}>
+				<View style={styles.imageContainer}>
+					<Image source={IMAGES.LOGO} style={{ width: 150, height: 120 }} />
+				</View>
 				<FormLogin formik={formik} />
                 <View style={styles.innerSpace}>
                     <Text style={{textAlign: 'center', color: '#999', fontSize: 12}}>ID do dispositivo: {deviceId}</Text>
                 </View>
-            </View>
-            <View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'flex-end'}]}>
-                <View style={styles.bgImage}>
-                    <Image source={IMAGES.BALL_BG} style={{ width: 140, height: 140 }} />
-                </View>
+				<View style={[GlobalStyle.secureMargin, {justifyContent: 'flex-end'}]}>
+					<View style={styles.bgImage}>
+						<Image source={IMAGES.BALL_BG} style={{ width: 140, height: 140 }} />
+					</View>
+				</View>
             </View>
         </View>
     );
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
 	imageContainer: { 
 		justifyContent: 'center',
 		alignItems: 'center',
-		flex: 2
+		//flex: 2
 	},
 	text: {
 		fontFamily: 'Mitr-Regular',

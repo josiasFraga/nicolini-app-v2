@@ -14,8 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import IMAGES from '@constants/images';
 import COLORS from '@constants/colors';
 
-type Props = {};
-export default class CenaHome extends Component<Props> {
+export default class CenaHome extends Component {
 
 	state = {
 		deviceId: '',
@@ -35,10 +34,11 @@ export default class CenaHome extends Component<Props> {
 					backgroundColor={'transparent'}
 					barStyle={'dark-content'}
 				/>
-				<View style={styles.imageContainer}>
-					<Image source={IMAGES.LOGO} style={{ width: 150, height: 120 }} />
-				</View>
-				<View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'flex-end'}]}>
+				<View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'space-between'}]}>
+					
+					<View style={styles.imageContainer}>
+						<Image source={IMAGES.LOGO} style={{ width: 150, height: 120 }} />
+					</View>
 					<View style={styles.innerSpace}>
 						<Button
 							icon={
@@ -165,7 +165,7 @@ export default class CenaHome extends Component<Props> {
 						<Text style={{textAlign: 'center', color: '#999', fontSize: 12}}>ID do dispositivo: {this.state.deviceId}</Text>
 					</View>
 				</View>
-				<View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'flex-end'}]}>
+				<View style={[GlobalStyle.secureMargin, {justifyContent: 'flex-end'}]}>
 					<View style={styles.bgImage}>
 						<Image source={IMAGES.BALL_BG} style={{ width: 140, height: 140 }} />
 					</View>
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
 	imageContainer: { 
 		justifyContent: 'center',
 		alignItems: 'center',
-		flex: 2
+		marginTop: 30
 	},
 	text: {
 		fontFamily: 'Mitr-Regular',

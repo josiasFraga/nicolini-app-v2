@@ -761,9 +761,7 @@ function* startSplit({payload}) {
 			},
 		});
 
-		console.log(response.data);
-		console.log(response.data.status);
-
+	
 		//console.log('[SAGA] - [COMEÇANDO SEPARAÇÃO]', response);
 
 		if ( response.data.status === 'ok' ) {
