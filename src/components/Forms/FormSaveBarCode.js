@@ -15,8 +15,25 @@ import RNFS from 'react-native-fs';
 
 import * as Yup from 'yup';
 
-const inArray = (array, value) => {
+const inArray = (value, array) => {
     return array.indexOf(value) !== -1;
+}
+
+function arraysAreEqual(arr1, arr2) {
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+
+    const sortedArr1 = arr1.slice().sort();
+    const sortedArr2 = arr2.slice().sort();
+
+    for (let i = 0; i < sortedArr1.length; i++) {
+        if (sortedArr1[i] !== sortedArr2[i]) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 const maskDate = (text) => {
@@ -77,17 +94,15 @@ export const FormSaveBarCode = (props) => {
 
                 setGoodMinValidity("");
                 try {
-                    console.log('Buscando nome do produto');
+                    console.log('... Buscando nome do produto');
                     const value = await AsyncStorage.getItem('my_splits');
         
                     if (value !== null) {
                     let separacoes = JSON.parse(value);
         
                     const separacao = separacoes.filter((separacao) => {
-                        return separacao.ean == props.barcodescanned;
-                    })
-
-                    console.log(separacao);
+                        return inArray(props.barcodescanned, separacao.eans);
+                    });
         
                     if ( separacao.length == 0 ) {
                         setProductName("");
@@ -170,18 +185,18 @@ export const FormSaveBarCode = (props) => {
         if ( db_table == 'CODIGOS_CENTRAL' ) {
             console.log('... Buscando quantidade coletada');
             const value = await AsyncStorage.getItem('my_splits');
-            let produtos = JSON.parse(value);
+            let separacoes = JSON.parse(value);
 
-            const product = produtos.filter((produto) => {
-                return produto.ean == code;
+            const busca_separacao = separacoes.filter((separacao) => {
+                return inArray(code, separacao.eans);
             });
 
-            if ( product.length == 0 ) {
+            if ( busca_separacao.length == 0 ) {
                 console.info('... Produto não encotrado');
                 return false;
             }
 
-            setNItens(product[0]._qtd_coletada);
+            setNItens(busca_separacao[0]._qtd_coletada);
             return false;
         }
 
@@ -279,8 +294,10 @@ export const FormSaveBarCode = (props) => {
           if (value !== null) {
             let produtos = JSON.parse(value);
 
+            console.log('... buscando produto na lista');
+
             const product = produtos.filter((produto) => {
-                return produto.ean == bar_code;
+                return inArray(bar_code, produto.eans);
             })
 
             if ( product.length == 0 ) {
@@ -324,7 +341,7 @@ export const FormSaveBarCode = (props) => {
 
 
                 let item = itens.filter((_item) => {
-                    return inArray(internal_codes_goods, _item.cd_codigoint);
+                    return inArray(_item.cd_codigoint, internal_codes_goods);
                 });
                 
                 if ( item.length == 0 ) {
@@ -358,8 +375,8 @@ export const FormSaveBarCode = (props) => {
             let produtos = JSON.parse(value);
 
             //procura o codigo de barras nos produtos  ja lidos para verificar a quantidade
-            const product_collected = produtos.filter((produto) => {
-                return produto.ean == bar_code;
+            const product_collected = produtos.filter((produto) => {                
+                return inArray(bar_code, produto.eans);
             });
 
             //se achou, significa que o operador ja leu, ai setamos aquantidade lida para comparar com o arquivo
@@ -637,7 +654,7 @@ export const FormSaveBarCode = (props) => {
 
             codigos = codigos.map((item_lista) => {
 
-                if ( item_lista.ean == store_register.ean ) {
+                if ( arraysAreEqual(item_lista.eans, store_register.eans) ) {
 
                     const new_qtd = item_lista._qtd_coletada + parseFloat(qtd_digitada);
     
