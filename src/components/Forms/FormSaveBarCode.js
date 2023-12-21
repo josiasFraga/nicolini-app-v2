@@ -368,31 +368,38 @@ export const FormSaveBarCode = (props) => {
     const _checkQtdInStore = async (read_product, bar_code, qtd) => {
 
         try {
-          const value = await AsyncStorage.getItem('my_splits');
-          let qtd_collected = 0;
+            const value = await AsyncStorage.getItem('my_splits');
+            let qtd_collected = 0;
 
-          if (value !== null) {
-            let produtos = JSON.parse(value);
+            if (value !== null) {
+                let produtos = JSON.parse(value);
 
-            //procura o codigo de barras nos produtos  ja lidos para verificar a quantidade
-            const product_collected = produtos.filter((produto) => {                
-                return inArray(bar_code, produto.eans);
-            });
+                //procura o codigo de barras nos produtos  ja lidos para verificar a quantidade
+                const product_collected = produtos.filter((produto) => {                
+                    return inArray(bar_code, produto.eans);
+                });
 
-            //se achou, significa que o operador ja leu, ai setamos aquantidade lida para comparar com o arquivo
-            if ( product_collected.length > 0 ) {
-                qtd_collected = read_product._qtd_coletada;
+                //se achou, significa que o operador ja leu, ai setamos aquantidade lida para comparar com o arquivo
+                if ( product_collected.length > 0 ) {
+                    qtd_collected = read_product._qtd_coletada;
+                }
+
+            } 
+
+            const     limit = parseFloat(read_product.QtdOriginal);
+            let       limit_max = limit + (( 50*limit) / 100 );
+            const     limit_max_2 = limit + (( 100*limit) / 100 );
+
+            //Separacao
+            const     new_total = parseFloat(qtd_collected) + parseFloat(qtd);
+
+            if ( read_product.Separacao === 2 ) {
+                limit_max = limit_max_2;
             }
 
-          } 
-
-          const limit = parseFloat(read_product.QtdOriginal);
-          const limit_max = limit + (( 50*limit) / 100 );
-          const new_total = parseFloat(qtd_collected) + parseFloat(qtd);
-
-          if ( new_total >  limit_max ) {
+            if ( new_total >  limit_max ) {
                 return limit_max;
-          }
+            }
 
           return false;
 
@@ -970,7 +977,7 @@ export const FormSaveBarCode = (props) => {
                             autoFocus
                             //showSoftInputOnFocus={false}
                             keyboardType={"numeric"}
-                            maxLength={db_table == "CODIGOS_AVULSOS" ? 7 : 6}
+                            maxLength={db_table == "CODIGOS_AVULSOS" ? 7 : 8}
                             placeholder={'Digite a quatidade'}
                             returnKeyType="next"
                             inputContainerStyle={{ height: 70, width: '100%', borderColor: 'gray', borderWidth: 1, textAlign: 'center', fontSize: 35, borderRadius: 30 }}

@@ -762,7 +762,7 @@ function* startSplit({payload}) {
 		});
 
 	
-		//console.log('[SAGA] - [COMEÇANDO SEPARAÇÃO]', response);
+		console.log('[SAGA] - [COMEÇANDO SEPARAÇÃO]', response);
 
 		if ( response.data.status === 'ok' ) {
 			yield put({
