@@ -747,8 +747,6 @@ function* startSplit({payload}) {
 	let data = new FormData();
 	let dados = payload.submitValues;
 
-	console.log(dados);
-
 	data.append('dados', JSON.stringify(dados));
 
 	try {
@@ -761,7 +759,6 @@ function* startSplit({payload}) {
 			},
 		});
 
-	
 		console.log('[SAGA] - [COMEÇANDO SEPARAÇÃO]', response);
 
 		if ( response.data.status === 'ok' ) {
@@ -772,6 +769,7 @@ function* startSplit({payload}) {
 
 			yield payload.setSubmitting(false);
 			yield AsyncStorage.setItem('my_splits', JSON.stringify(response.data.data));
+			yield AsyncStorage.setItem('pallet_number', ''+response.data.pallet_number);
 			yield payload.callback_success();
 			
 			AlertHelper.show('success', 'Tudo Certo', 'Separação iniciada com sucesso!');
@@ -814,10 +812,9 @@ function* endSplit({payload}) {
 	
 	let data = new FormData();
 	let dados = payload.submitValues;
+	const palletNumber = payload.palletNumber;
 
-	console.log('dados');
-	console.log(dados);
-
+	data.append('palletNumber', palletNumber);
 	data.append('dados', JSON.stringify(dados));
 
 	try {
@@ -852,6 +849,112 @@ function* endSplit({payload}) {
 	}
 }
 
+function* savePallets({payload}) {
+
+	const networkStatus = yield NetInfo.fetch();
+	
+	if ( !networkStatus.isConnected ) {
+		yield AlertHelper.show(
+			'warn',
+			'Sem conexão',
+			'Você só pode cadastrar pallets quando seu dispositivo quando estiver com internet.',
+		  );
+		  return true;
+	}
+
+	console.log('[SAGA] - CADASTRQANDO PALLETS');
+	
+	let data = new FormData();
+	let dados = payload.submitValues;
+
+	data.append('dados', JSON.stringify(dados));
+
+	try {
+		const response = yield call(callApi, { 
+			endpoint: CONFIG.url+'/paletes/add.json',
+			method: 'POST',
+			data: data,
+			headers: {
+				'content-type': 'multipart/form-data',
+			},
+		});		
+
+		console.log('[SAGA] - [CADASTRANDO PALLETS]', response);
+
+		if ( response.data.status === 'ok' ) {
+
+			yield payload.setSubmitting(false);
+			yield payload.callback_success();
+			
+			AlertHelper.show('success', 'Tudo Certo', 'Pallets registrados com sucesso!');
+	
+		} else {
+			AlertHelper.show('error', 'Error', response.data.message);
+			yield payload.setSubmitting(false);
+		}
+
+	} catch ({message, response}) {
+		console.error('[SAGA] - [REGISTRANDO PALLETS]', { message, response });
+		AlertHelper.show('error', 'Erro', message);
+		yield payload.setSubmitting(false);
+	}
+}
+
+function* sendIndividualSplit({payload}) {
+
+	const networkStatus = yield NetInfo.fetch();
+	
+	if ( !networkStatus.isConnected ) {
+		yield AlertHelper.show(
+			'warn',
+			'Sem conexão',
+			'Você só pode cadastrar pallets quando seu dispositivo quando estiver com internet.',
+		  );
+		  return true;
+	}
+
+	console.log('[SAGA] - ENVIANDO SEPARACAO INDIVIDUAL');
+	
+	let data = new FormData();
+	let dados = payload.submitValues;
+
+	data.append('dados', JSON.stringify(dados));
+	data.append('store_code', payload.storeCode);
+
+	try {
+		const response = yield call(callApi, { 
+			endpoint: CONFIG.url+'/coletagens-avulsas/add.json',
+			method: 'POST',
+			data: data,
+			headers: {
+				'content-type': 'multipart/form-data',
+			},
+		});		
+
+		console.log('[SAGA] - [ENVIANDO SEPARACAO INDIVIDUAL]', response);
+
+		if ( response.data.status === 'ok' ) {
+
+			yield payload.setSubmitting(false);
+
+			if ( payload.callbackSuccess ) {
+				yield payload.callbackSuccess();
+			}
+			
+			AlertHelper.show('success', 'Tudo Certo', 'Dados da coletagem enviados com sucesso!');
+	
+		} else {
+			AlertHelper.show('error', 'Error', response.data.message);
+			yield payload.setSubmitting(false);
+		}
+
+	} catch ({message, response}) {
+		console.error('[SAGA] - [REGISTRANDO PALLETS]', { message, response });
+		AlertHelper.show('error', 'Erro', message);
+		yield payload.setSubmitting(false);
+	}
+}
+
 export default function* () {
 	yield takeLatest('REGISTER_DEVICE', registerDevice);
 	yield takeLatest('LOGIN_TRIGGER', login);
@@ -868,4 +971,6 @@ export default function* () {
 	yield takeLatest('LOAD_SPLITS', loadSplits);
 	yield takeLatest('START_SPLIT', startSplit);
 	yield takeLatest('END_SPLIT', endSplit);
+	yield takeLatest('SAVE_PALLETS', savePallets);
+	yield takeLatest('SEND_SINGLE_SPLIT', sendIndividualSplit);
 }

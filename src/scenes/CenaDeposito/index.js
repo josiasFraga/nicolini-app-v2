@@ -102,6 +102,31 @@ export default class CenaDeposito extends Component<Props> {
 							}}
 						/>
 					</View>
+					<View style={styles.innerSpace}>
+						<Button
+							icon={
+								<View style={{marginRight: 20}}>
+								<Icon
+								name="list"
+								size={20}
+								type='entypo'
+								iconStyle={{color: COLORS.secondary}}
+								/>
+								</View>
+							}
+							titleStyle={{}}
+							buttonStyle={{borderRadius: 25, paddingVertical: 10, backgroundColor: COLORS.primary}}
+							title="Registro Pallets"
+							onPress={() => {
+								this.props.navigation.dispatch(
+									CommonActions.navigate({
+										name: 'RegistroPallets',
+									})
+								);
+
+							}}
+						/>
+					</View>
 				</View>
 				<View style={[GlobalStyle.secureMargin, {flex: 1, justifyContent: 'flex-end'}]}>
 					<View style={styles.bgImage}>
