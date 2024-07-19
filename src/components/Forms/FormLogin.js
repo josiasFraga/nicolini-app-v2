@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Input, Button, Icon } from 'react-native-elements';
+import PickerLojas from './Components/PickerLojas';
 import COLORS from '@constants/colors';
 
 export default function FormLogin(props) {
@@ -9,6 +10,7 @@ export default function FormLogin(props) {
   return (
     <>
     <View>
+        <PickerLojas formik={formik} />
         <Input
             label="Login"
             leftIcon={<Icon name="user" type={"antdesign"} size={24} color={COLORS.quaternary} />}

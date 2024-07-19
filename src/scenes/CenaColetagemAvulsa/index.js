@@ -23,6 +23,7 @@ import COLORS from '@constants/colors';
 
 const CenaColetagemAvulsa = () => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [userStoreCode, setUserStoreCode] = useState(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const collection_data = useSelector(state => state.appReducer.single_collection_data);
@@ -45,6 +46,20 @@ const CenaColetagemAvulsa = () => {
       ]
     );
   }
+
+  const loadUserStore = async () => {
+    console.log('... Carregando loja do usuário');
+    const user_store = await AsyncStorage.getItem('storeCode');
+    console.log('-> ' + user_store);
+
+    if (user_store === null) {
+      showAlert('Loja do usuário não encontrada');
+      return;
+    }
+
+    setUserStoreCode(user_store);
+    
+  };
 
   const sendDataToBackend = async (values, setSubmitting, resetForm) => {
     const value = await AsyncStorage.getItem('CODIGOS_AVULSOS');
@@ -84,6 +99,10 @@ const CenaColetagemAvulsa = () => {
     
   };
 
+  useEffect(()=>{
+    loadUserStore();
+  },[]);
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -91,7 +110,7 @@ const CenaColetagemAvulsa = () => {
         backgroundColor={'transparent'}
         barStyle={'dark-content'}
       />
-      <Header backButton={true} titulo={"Coletagem Avulsa"} />
+      <Header backButton={true} titulo={"Coletagem Avulsa " + userStoreCode} />
       <View style={[GlobalStyle.row, { justifyContent: "center", backgroundColor: COLORS.primary }]}>
         <View style={{ padding: 5, marginRight: 5 }}>
           <Text style={{ textAlign: "center", fontSize: 18, color: "#FFF", fontWeight: "bold" }}>{collection_data.n_itens}</Text>

@@ -18,6 +18,9 @@ const PickerLojas = ({ formik }) => {
         buscaLojas();
     }, []);
 
+    console.log(formik.errors);
+    console.log(formik.touched);
+
     return (
         <View>
             <Picker
@@ -31,9 +34,11 @@ const PickerLojas = ({ formik }) => {
                     <Picker.Item key={"option_loja_" + index} label={loja.Loja} value={loja.Loja} />
                 ))}
             </Picker>
-            {formik.touched[name] && formik.errors[name] && (
+            <View style={{marginLeft: 15, marginTop: 0, paddingTop: 0, marginBottom: 10}}>
+            {formik.errors[name] && (
                 <Text style={{ color: 'red' }}>{formik.errors[name]}</Text> // Style as needed
             )}
+            </View>
         </View>
     );
 };

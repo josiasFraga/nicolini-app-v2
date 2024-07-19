@@ -16,7 +16,7 @@
     "@react-native-picker/picker": "^2.6.1",
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/native-stack": "^6.9.12",
-    "axios": "^0.21.4",
+    "axios": "^1.7.2",
     "babel-plugin-module-resolver": "^4.1.0",
     "date-fns": "^2.29.3",
     "deprecated-react-native-prop-types": "^4.0.0",

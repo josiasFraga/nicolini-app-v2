@@ -17,6 +17,7 @@ import IMAGES from '@constants/images';
 import COLORS from '@constants/colors';
 
 const LoginSchema = yup.object().shape({
+	loja: yup.string().required('Loja é obrigatório'),
 	user: yup.string().required('Usuário é obrigatório'),
 	password: yup.string().required('Senha é obrigatória'),
 });
@@ -51,7 +52,7 @@ export default function CenaLogin(props) {
 	  }
 
 	const formik = useFormik({
-		initialValues: { user: '', password: '' },
+		initialValues: { user: '', password: '', loja: '' },
 		validationSchema: LoginSchema,
 		onSubmit: (values, {setSubmitting, resetForm}) => {
 

@@ -66,6 +66,7 @@ export const CenaSeparacaoCentral = (props) => {
     const [nItensColetados, setNItensColetados] = useState(0);
     const [nItensUnicosColetados, setNItensUnicosColetados] = useState(0);
     const [palletNumber, setPalletNumber] = useState('');
+    const [userStoreCode, setUserStoreCode] = useState(null);
 
     useEffect(() => {
         if (separacoes.length > 0) {
@@ -75,8 +76,13 @@ export const CenaSeparacaoCentral = (props) => {
     }, [separacoes]);
 
     useEffect(() => {
+        loadPalletNumber();
+    }, [showForm]);
+
+    useEffect(() => {
         loadMySplits();
         loadPalletNumber();
+        loadUserStore();
     }, []);
 
     const loadMySplits = async () => {
@@ -173,6 +179,20 @@ export const CenaSeparacaoCentral = (props) => {
         }
     }
 
+    const loadUserStore = async () => {
+        console.log('... Carregando loja do usuário');
+        const user_store = await AsyncStorage.getItem('storeCode');
+        console.log('-> ' + user_store);
+
+        if (user_store === null) {
+        showAlert('Loja do usuário não encontrada');
+        return;
+        }
+
+        setUserStoreCode(user_store);
+        
+    };
+
     const formik = useFormik({
         initialValues: {
             loja: '',
@@ -214,6 +234,7 @@ export const CenaSeparacaoCentral = (props) => {
                             setSubmitting: formik.setSubmitting,
                             callback_success: () => {
                                 loadMySplits();
+                                loadPalletNumber();
                             }
                         }
                     })
@@ -298,7 +319,7 @@ export const CenaSeparacaoCentral = (props) => {
                 backgroundColor={'transparent'}
                 barStyle={'dark-content'}
             />
-            <Header backButton={true} titulo={"Separação Central"} />
+            <Header backButton={true} titulo={"Separação Central " + userStoreCode} />
 
             <View style={{ backgroundColor: COLORS.primary }}>
                 <Text style={{ color: "#FFF", textAlign: "center", fontSize: 18, paddingTop: 10, textTransform: "uppercase" }}>Produtos</Text>

@@ -110,6 +110,7 @@ function* login({payload}) {
 			console.log('[SAGA] - TOKEN ' + response.data.token);
 
 			yield AsyncStorage.setItem('bearerToken', response.data.token);
+			yield AsyncStorage.setItem('storeCode', response.data.loja);
 			yield payload.callback_success();
 
 		} else {
@@ -747,16 +748,16 @@ function* startSplit({payload}) {
 	let data = new FormData();
 	let dados = payload.submitValues;
 
+	const user_store = yield AsyncStorage.getItem('storeCode');
+
 	data.append('dados', JSON.stringify(dados));
+	data.append('user_store', user_store);
 
 	try {
 		const response = yield call(callApi, { 
 			endpoint: CONFIG.url+'/separacao-central/start.json',
 			method: 'POST',
-			data: data,
-			headers: {
-				'content-type': 'multipart/form-data',
-			},
+			data: data
 		});
 
 		console.log('[SAGA] - [COMEÇANDO SEPARAÇÃO]', response);
@@ -917,9 +918,11 @@ function* sendIndividualSplit({payload}) {
 	
 	let data = new FormData();
 	let dados = payload.submitValues;
+	const user_store = yield AsyncStorage.getItem('storeCode');
 
 	data.append('dados', JSON.stringify(dados));
 	data.append('store_code', payload.storeCode);
+	data.append('user_store', user_store);
 
 	try {
 		const response = yield call(callApi, { 

@@ -16,13 +16,14 @@ export const callApi = async (call) => {
 
     // Merge headers info
     if ( method == 'POST' ) {
+        
         defaultHeaders = {
-            'content-type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json',
         };
     } else {
         defaultHeaders = {
-            'Content-Type': 'application/json',
+            //'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
     }
