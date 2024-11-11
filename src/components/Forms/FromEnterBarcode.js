@@ -54,7 +54,7 @@
                         //showSoftInputOnFocus={false}
                         keyboardType={"numeric"}
                         ref={refContainer}
-                        maxLength={13}
+                        maxLength={14}
                         minLength={5}
                         placeholder={'Digite o código de barras aqui'}
                         returnKeyType="next"

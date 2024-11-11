@@ -73,14 +73,12 @@ const CenaColetagemAvulsa = () => {
     var codesToFile = [];
 
     codesToFile = Object.values(codigos.reduce((acc, item) => {
-      if (!acc[item.barcodescanned]) {
-        acc[item.barcodescanned] = {
-          barcodescanned: item.barcodescanned,
-          qtd: parseFloat(item.qtd),
-        };
-      } else {
-        acc[item.barcodescanned].qtd += parseFloat(item.qtd);
-      }
+
+      acc[item.barcodescanned] = {
+        barcodescanned: item.barcodescanned,
+        qtd: item.qtd,
+      };
+
       return acc;
     }, {}));
 	

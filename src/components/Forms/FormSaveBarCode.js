@@ -431,15 +431,40 @@ export const FormSaveBarCode = (props) => {
                 item = file_register;
                 item.barcodescanned = item.cod_barras;
                 delete item.cod_barras;
-            }            
+            }
 
             //procura o código de barras na lista lida
             const searchCodeInList = codigos.filter((item_lista, index) => {
                 return item_lista.barcodescanned == item.barcodescanned;
             });
 
-            //se não achou o produto, adiciona na lista lida
-            if ( searchCodeInList.length == 0 ) {
+
+            // Códigos avulsos permite "-" na quantidade
+            if (db_table != "CODIGOS_AVULSOS") {
+        
+                console.log('..Adicionando produto a lista - ' + item.barcodescanned + ' - ' + qtd_digitada);
+                
+                let itemToAdd = {
+                    barcodescanned: item.barcodescanned,
+                    qtd: qtd_digitada,
+                };
+
+                if ( item.loja ) {
+                    itemToAdd.loja = item.loja;
+                }
+
+                if ( item.pedido ) {
+                    itemToAdd.pedido = item.pedido;
+                }
+
+                if ( item.produto ) {
+                    itemToAdd.produto = item.produto;
+                }
+    
+                codigos.push(itemToAdd);
+
+            }
+            else if ( searchCodeInList.length == 0 ) { //se não achou o produto, adiciona na lista lida
 
                 if ( parseFloat(qtd_digitada) < 0 ) {
                     AlertHelper.show(
@@ -516,7 +541,7 @@ export const FormSaveBarCode = (props) => {
                 type: 'LOAD_CENTRAL_COLLECTION_DATA',
                 payload: {}
             })
-            
+
             dispatch({
                 type: 'LOAD_INVERT_COLLECTION_DATA',
                 payload: {}
@@ -820,7 +845,19 @@ export const FormSaveBarCode = (props) => {
     _contaItens(props.barcodescanned);
 
     let validation = {
-        qtd: Yup.number('O valor deve ser numérico').required('Digite uma quantidade'),
+        qtd: Yup.string()
+            .required('Digite uma quantidade')
+            .test(
+                'is-valid-format',
+                'Formato inválido. O valor deve conter apenas números e hífens.',
+                function (value) {
+                    if (db_table === "CODIGOS_AVULSOS") {
+                        // Permite qualquer sequência de números e hífens
+                        return /^[0-9-]+$/.test(value);
+                    }
+                    return /^[0-9]*$/.test(value); // Apenas números para outros valores de db_table
+                }
+            ),
     };
 
     if ( goodMinValidity != "" ) {
@@ -970,14 +1007,24 @@ export const FormSaveBarCode = (props) => {
                     <View>
                         <Input
                             name={"qtd"}
-                            onChangeText={handleChange("qtd")}
+                            onChangeText={(text) => {
+                                if (db_table === "CODIGOS_AVULSOS") {
+                                    // Permite apenas números e hífens no formato correto
+                                    const newText = text.replace(/[^0-9-]/g, "");
+                                    setFieldValue("qtd", newText);
+                                } else {
+                                    // Para outros valores de db_table, permite apenas números
+                                    const newText = text.replace(/[^0-9]/g, "");
+                                    setFieldValue("qtd", newText);
+                                }
+                            }}
                             onBlur={handleBlur("qtd")}
                             value={values.qtd}
                             ref={input}
                             autoFocus
                             //showSoftInputOnFocus={false}
                             keyboardType={"numeric"}
-                            maxLength={db_table == "CODIGOS_AVULSOS" ? 7 : 8}
+                            maxLength={db_table == "CODIGOS_AVULSOS" ? 15 : 8}
                             placeholder={'Digite a quatidade'}
                             returnKeyType="next"
                             inputContainerStyle={{ height: 70, width: '100%', borderColor: 'gray', borderWidth: 1, textAlign: 'center', fontSize: 35, borderRadius: 30 }}

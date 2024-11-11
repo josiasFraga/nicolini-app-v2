@@ -89,18 +89,34 @@
             let countCodes = 1;
             //let codesToFile = codigos;
             var codesToFile = [];
-            
-            codesToFile = Object.values(codigos.reduce((acc, item) => {
-                if (!acc[item.barcodescanned]) {
+
+            if ( tipo == "enderecamento" ) {
+
+                codesToFile = Object.values(codigos.reduce((acc, item) => {
+        
                     acc[item.barcodescanned] = {
                         barcodescanned: item.barcodescanned,
-                        qtd: parseFloat(item.qtd),
+                        qtd: item.qtd,
                     };
-                } else {
-                    acc[item.barcodescanned].qtd += parseFloat(item.qtd);
-                }
-                return acc;
-            }, {}));
+    
+                    return acc;
+                }, {}));
+
+            } else {
+
+                codesToFile = Object.values(codigos.reduce((acc, item) => {
+                    if (!acc[item.barcodescanned]) {
+                        acc[item.barcodescanned] = {
+                            barcodescanned: item.barcodescanned,
+                            qtd: parseFloat(item.qtd),
+                        };
+                    } else {
+                        acc[item.barcodescanned].qtd += parseFloat(item.qtd);
+                    }
+                    return acc;
+                }, {}));
+
+            }
 
             for(let codigo of codesToFile) {
 
@@ -130,6 +146,9 @@
                 countCodes++;
                 
             }
+
+            console.log(codesToFile);
+            return false;
 
             var date = new Date().getDate(); //To get the Current Date
             var month = new Date().getMonth() + 1; //To get the Current Month
