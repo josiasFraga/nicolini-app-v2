@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {  StyleSheet } from 'react-native';
 import { FormExportar } from '@components/Forms/FormExportar';
+import { useRoute } from '@react-navigation/native';
 
 
-export default function ModalBarcodeReader(props) {
+export default function ModalExportar() {
+  const route = useRoute();
+  const origin = route?.params?.origin;
+  console.log('origin', origin);
 
     return (
-      <FormExportar origin={props.origin} />
+      <FormExportar origin={origin} />
     )
 }
 

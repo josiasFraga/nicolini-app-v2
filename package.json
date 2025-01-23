@@ -10,12 +10,13 @@
     "test": "jest"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^1.18.0",
+    "@react-native-async-storage/async-storage": "^2.1.0",
     "@react-native-community/cli-platform-android": "^11.0.0",
     "@react-native-community/netinfo": "^6.0.0",
     "@react-native-picker/picker": "^2.6.1",
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/native-stack": "^6.9.12",
+    "@realm/react": "^0.6.2",
     "axios": "^1.7.2",
     "babel-plugin-module-resolver": "^4.1.0",
     "date-fns": "^2.29.3",
@@ -47,6 +48,7 @@
     "react-native-view-overflow": "0.0.5",
     "react-native-vision-camera": "^3.6.13",
     "react-redux": "^7.2.4",
+    "realm": "^11.10.2",
     "redux-form": "^8.3.7",
     "redux-form-input-masks": "^2.0.1",
     "redux-saga": "^1.1.3",

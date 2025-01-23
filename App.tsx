@@ -10,6 +10,8 @@ import store from './store';
 import OneSignal from 'react-native-onesignal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {RealmContext} from '@configs/realmConfig';
+const {RealmProvider} = RealmContext;
 
 function App() {
 
@@ -89,10 +91,11 @@ function App() {
 
   return (
     <SafeAreaProvider>
-
+      <RealmProvider>
       <Provider store={store}>
         <Routes />
       </Provider>
+      </RealmProvider>
 
       <DropdownAlert
         defaultContainer={{

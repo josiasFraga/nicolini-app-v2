@@ -81,10 +81,12 @@
      let _exportData = async (nota='', tipo) => {
     
         try {
-          const value = await AsyncStorage.getItem(db_table);
+            console.log("... Buscando dados a exportar " + db_table);
+          const value = await AsyncStorage.getItem('db_table');
           if (value !== null) {
             // We have data!!
             let codigos = JSON.parse(value)
+            console.log("-> Dados encontrados ") + codigos.length;
             let texto = '';
             let countCodes = 1;
             //let codesToFile = codigos;
@@ -146,9 +148,6 @@
                 countCodes++;
                 
             }
-
-            console.log(codesToFile);
-            return false;
 
             var date = new Date().getDate(); //To get the Current Date
             var month = new Date().getMonth() + 1; //To get the Current Month

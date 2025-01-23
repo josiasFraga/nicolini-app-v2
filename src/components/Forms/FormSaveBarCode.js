@@ -15,6 +15,12 @@ import RNFS from 'react-native-fs';
 
 import * as Yup from 'yup';
 
+// Importações do Realm
+import { RealmContext } from '@configs/realmConfig'; // Ajuste o caminho do seu config
+
+// Pegamos os hooks de dentro do contexto
+const {useQuery} = RealmContext;
+
 const inArray = (value, array) => {
     return array.indexOf(value) !== -1;
 }
@@ -53,6 +59,8 @@ export const FormSaveBarCode = (props) => {
     const [goodMinValidity, setGoodMinValidity] = useState("");
     const backToScanner = props.backToScanner;
     let itens = props.itens;
+
+    let produtos = useQuery('InvertLine');
 
     let db_table = "CODIGOS_AVULSOS";
 
@@ -124,13 +132,13 @@ export const FormSaveBarCode = (props) => {
 
                 setGoodMinValidity("");
                 try {
-                    const value = await AsyncStorage.getItem('UPLOADED_FILE_INVERT_COLLECTION');
+                    console.log('... Buscando nome do produto');
+                    console.log(produtos.length + ' produtos encontrados');
         
-                    if (value !== null) {
-                    let produtos = JSON.parse(value);
+                    if (produtos !== null && produtos.length > 0) {
         
                     const product = produtos.filter((produto) => {
-                        return produto.cod_barras == props.barcodescanned;
+                        return produto.cod_barras === props.barcodescanned;
                     })
         
                     if ( product.length == 0 ) {
@@ -248,16 +256,12 @@ export const FormSaveBarCode = (props) => {
     const _checkCodeExistsInFile = async (bar_code) => {
         try {
 
-            let file_name = 'UPLOADED_FILE_CENTRAL_COLLECTION';
+            console.log('... buscando produto na lista InvertLine');
+            console.log(produtos.length + ' produtos encontrados');
+            console.log(bar_code);
 
-            if ( props.origin && props.origin == "coletagem_invert") {
-                file_name = "UPLOADED_FILE_INVERT_COLLECTION";
-            }
-    
-          const value = await AsyncStorage.getItem(file_name);
 
-          if (value !== null) {
-            let produtos = JSON.parse(value);
+          if (produtos !== null && produtos.length > 0) {
 
             const product = produtos.filter((produto) => {
                 return produto.cod_barras == bar_code;

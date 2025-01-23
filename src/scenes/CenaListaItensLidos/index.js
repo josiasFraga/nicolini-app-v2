@@ -1,251 +1,188 @@
-import React, {Component} from 'react';
-
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-	StyleSheet,
-	View,
-	StatusBar,
-	FlatList
+  StyleSheet,
+  View,
+  StatusBar,
+  FlatList
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import {Text, ListItem, SearchBar } from 'react-native-elements';
+import { Text, ListItem, SearchBar } from 'react-native-elements';
 import GlobalStyle from '@styles/global';
 import AlertHelper from '@components/Alert/AlertHelper';
 import Header from '@components/Header';
-var RNFS = require('react-native-fs');
-import DocumentPicker, {
-	isInProgress,
-  } from 'react-native-document-picker'
-
 import COLORS from '@constants/colors';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { connect} from 'react-redux';
+// Importações do Realm
+import { RealmContext } from '@configs/realmConfig'; // Ajuste o caminho do seu config
 
+// Pegamos os hooks de dentro do contexto
+const {useQuery} = RealmContext;
 
-type Props = {};
-export class CenaListaItensLidos extends Component<Props> {
+const CenaListaItensLidos = ({ origin }) => {
+  const dispatch = useDispatch();
 
-	constructor(props) {
-		super(props);
-		this.state = {
-			file_data: [],
-			file_data_n_itens: 0,
-            isLoading: false,
-            itens: [],
-            search: ""
-		};
-	}
+  const allLines = useQuery('InvertLine'); 
 
-    componentDidMount = () => {
+  // Redux state
+  const collection_data = useSelector(
+    (state) => state.appReducer.invert_collection_data
+  );
 
-        this.props.loadData();
-		this.checkUploadedFile();
-        this.buscaItens();
+  // Local state
+  const [fileDataNItems, setFileDataNItems] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [itens, setItens] = useState([]);
+  const [search, setSearch] = useState("");
+
+  // Load data from Redux saga or store
+  const loadData = useCallback(() => {
+    dispatch({
+      type: 'LOAD_INVERT_COLLECTION_DATA',
+      payload: {},
+    });
+  }, [dispatch]);
+
+  // Check the uploaded file in AsyncStorage
+  const checkUploadedFile = useCallback(async () => {
+	setFileDataNItems(allLines.length);
+  }, [allLines]);
+
+  // Fetch scanned items from AsyncStorage
+  const buscaItens = useCallback(async () => {
+    let db_table = 'CODIGOS_AVULSOS';
+
+    if (origin === "separacao_central") {
+      db_table = "CODIGOS_CENTRAL";
+    } else if (origin === "coletagem_invert") {
+      db_table = "CODIGOS_INVERT";
     }
 
-	checkUploadedFile = async () => {
-		
-		const value = await AsyncStorage.getItem('UPLOADED_FILE_INVERT_COLLECTION');
-		
-		if (value !== null) {
-		  	let data = JSON.parse(value);
-		  	this.setState({file_data_n_itens: data.length, file_data: data});
-		} else {
-			this.setState({file_data_n_itens: 0, file_data: []});
-		}
-	}
+    setIsLoading(true);
 
-	handleError = (err) => {
-		if (DocumentPicker.isCancel(err)) {
-		  console.warn('cancelled')
-		  // User cancelled the picker, exit any dialogs or menus and move on
-		} else if (isInProgress(err)) {
-		  console.warn('multiple pickers were opened, only the last will be considered')
-		} else {
-		  throw err
-		}
-	}
-
-    buscaItens = async () => {
-
-        let db_table = 'CODIGOS_AVULSOS';
-
-        this.setState({isLoading: true});
-
-        if ( this.props.origin && this.props.origin == "separacao_central") {
-            db_table = "CODIGOS_CENTRAL";
-        }
-     
-        if ( this.props.origin && this.props.origin == "coletagem_invert") {
-            db_table = "CODIGOS_INVERT";
-        }
-
-        try {
-            console.log("buscando os itens escaneados " + db_table);
-            const value = await AsyncStorage.getItem(db_table);
-            if (value !== null) {
-                // We have data!!
-                let codigos = JSON.parse(value);
-                if ( this.state.search.trim() != "" ) {
-                    const buscaUsuario = this.state.search.trim().toLocaleLowerCase();
-                    codigos = codigos.filter((codigo,index) => {
-                        return String(codigo.produto.toLocaleLowerCase()).includes(buscaUsuario) || String(codigo.barcodescanned.toLocaleLowerCase()).includes(buscaUsuario)
-                    })
-                }
-                codigos = [].concat(codigos)
-                .sort((a, b) => a.produto > b.produto ? 1 : -1)
-                this.setState({"itens": codigos});
-            }
-        } catch (error) {
-            console.log(error);
-            AlertHelper.show(
-                'error',
-                'Erro',
-                'Ocorreu um errro ao contar os dados',
+    try {
+      const value = await AsyncStorage.getItem(db_table);
+      if (value !== null) {
+        let codigos = JSON.parse(value);
+        if (search.trim() !== "") {
+          const buscaUsuario = search.trim().toLowerCase();
+          codigos = codigos.filter((codigo) => {
+            return (
+              codigo.produto.toLowerCase().includes(buscaUsuario) ||
+              codigo.barcodescanned.toLowerCase().includes(buscaUsuario)
             );
+          });
         }
-
-        this.setState({isLoading: false});
-        
+        codigos = codigos.sort((a, b) => (a.produto > b.produto ? 1 : -1));
+        setItens(codigos);
+      }
+    } catch (error) {
+      console.log(error);
+      AlertHelper.show('error', 'Erro', 'Ocorreu um erro ao contar os dados');
     }
 
-    updateSearch = (search) => {
-        this.setState({ search });
-        this.buscaItens();
-      };
+    setIsLoading(false);
+  }, [origin, search]);
 
+  // Update search text and trigger fetch
+  const updateSearch = (text) => {
+    setSearch(text);
+    buscaItens();
+  };
 
-    renderItem = ({ item }) => (
-        <ListItem bottomDivider>
-        <ListItem.Content>
-          <ListItem.Title>{item.produto}</ListItem.Title>
-          <ListItem.Subtitle>{item.barcodescanned}</ListItem.Subtitle>
-        </ListItem.Content>
-        <Text>QTD: {item.qtd}</Text>
-      </ListItem>
-    );
-    
-	render() {
-        const search = this.state.search;
-		return (
-			<View style={styles.container}>
-				<StatusBar
-					translucent={true}
-					backgroundColor={'transparent'}
-					barStyle={'dark-content'}
-				/>
-                <Header backButton={true} titulo={"Itens Lidos"} />
-                <View style={{ backgroundColor: COLORS.primary}}>
-					<Text style={{color: "#FFF", textAlign: "center", fontSize: 18, paddingTop: 10, textTransform: "uppercase"}}>Produtos</Text>
-					<View style={[GlobalStyle.row, { justifyContent: "space-around", alignItems: "center"}]}>
-						<View style={{padding: 5, marginRight: 5, flex: 1}}>
-							<Text style={{textAlign: "center", fontSize: 18, color: "#FFF", fontWeight: "bold"}}>{this.state.file_data_n_itens}</Text>
-							<Text style={{color: "#FFF", textAlign: "center"}}>Lidos</Text>
-						</View>
-						<View style={{padding: 5, marginRight: 5, flex: 1}}>
-							<Text style={{textAlign: "center", fontSize: 18, color: "#FFF", fontWeight: "bold"}}>{this.props.collection_data.n_itens}</Text>
-							<Text style={{color: "#FFF", textAlign: "center"}}>Coletados</Text>
-						</View>
-						<View style={{padding: 5, marginLeft: 5, flex: 1}}>
-							<Text style={{textAlign: "center", fontSize: 18, color: "#FFF", fontWeight: "bold"}}>{this.props.collection_data.n_uniqe_itens}</Text>
-							<Text style={{color: "#FFF", textAlign: "center"}}>Únicos Coletados</Text>
-						</View>
-					</View>
-				</View>
-                <SearchBar
-                    placeholder="Buscar item..."
-                    onChangeText={this.updateSearch}
-                    value={search}
-                    lightTheme={true}
-                />
-				<View style={[{flex: 1, justifyContent: 'center'}]}>
-                    <FlatList
-                        data={this.state.itens}
-                        renderItem={this.renderItem}
-                        keyExtractor={item => item.barcodescanned}
-                        onRefresh={this.buscaItens}
-                        refreshing={this.state.isLoading}
-                        ListEmptyComponent={() => (
-                            <Text style={{textAlign: 'center'}}>Nenhum item escaneado.</Text>
-                        )}
-                    />
-				
-				</View>
-			</View>
-		);
-	}
-}
+  // Equivalent to componentDidMount
+  useEffect(() => {
+    loadData();
+    checkUploadedFile();
+    buscaItens();
+  }, [loadData, checkUploadedFile, buscaItens]);
+
+  // Render a single item in the list
+  const renderItem = ({ item }) => (
+    <ListItem bottomDivider>
+      <ListItem.Content>
+        <ListItem.Title>{item.produto}</ListItem.Title>
+        <ListItem.Subtitle>{item.barcodescanned}</ListItem.Subtitle>
+      </ListItem.Content>
+      <Text>QTD: {item.qtd}</Text>
+    </ListItem>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor={'transparent'} barStyle={'dark-content'} />
+      <Header backButton titulo="Itens Lidos" />
+
+      <View style={{ backgroundColor: COLORS.primary }}>
+        <Text style={styles.headerText}>Produtos</Text>
+        <View style={[GlobalStyle.row, styles.statsContainer]}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{fileDataNItems}</Text>
+            <Text style={styles.statLabel}>Lidos</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{collection_data.n_itens}</Text>
+            <Text style={styles.statLabel}>Coletados</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{collection_data.n_uniqe_itens}</Text>
+            <Text style={styles.statLabel}>Únicos Coletados</Text>
+          </View>
+        </View>
+      </View>
+
+      <SearchBar
+        placeholder="Buscar item..."
+        onChangeText={updateSearch}
+        value={search}
+        lightTheme
+      />
+
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <FlatList
+          data={itens}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.barcodescanned}
+          onRefresh={buscaItens}
+          refreshing={isLoading}
+          ListEmptyComponent={() => (
+            <Text style={{ textAlign: 'center' }}>Nenhum item escaneado.</Text>
+          )}
+        />
+      </View>
+    </View>
+  );
+};
+
+export default CenaListaItensLidos;
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-	},
-	imageContainer: { 
-		justifyContent: 'center',
-		alignItems: 'center',
-		flex: 2
-	},
-	text: {
-		fontFamily: 'Mitr-Regular',
-		lineHeight: 18,
-	},
-	textMedium: {
-		fontFamily: 'Mitr-Medium',
-		marginBottom: 3,
-	},
-	centerFully: {
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	subtitle: {
-		textAlign: 'center',
-		fontSize: 15,
-		marginBottom: 7,
-	},
-	innerSpace: {
-		padding: 15,
-	},
-	discountBox: {
-		borderWidth: 0.5,
-		borderColor: '#CCC',
-		padding: 15,
-		borderRadius: 15,
-		margin: 15,
-		flex: 1,
-		flexDirection: 'row',
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	buttonVisitante: {
-		marginTop: 15,
-	},
-	buttonCadastrarText: {
-		textAlign: 'center',
-		color: '#FFF',
-	},
-	bgImage: {
-		width: 120,
-		height: 120,
-		position: 'absolute',
-		zIndex: 999,
-		bottom:-50,
-		right: -20,
-		alignSelf: 'flex-end',
-	}
+  container: {
+    flex: 1,
+  },
+  headerText: {
+    color: "#FFF",
+    textAlign: "center",
+    fontSize: 18,
+    paddingTop: 10,
+    textTransform: "uppercase",
+  },
+  statsContainer: {
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  statBox: {
+    padding: 5,
+    flex: 1,
+  },
+  statNumber: {
+    textAlign: "center",
+    fontSize: 18,
+    color: "#FFF",
+    fontWeight: "bold",
+  },
+  statLabel: {
+    color: "#FFF",
+    textAlign: "center",
+  },
 });
-
-const mapStateToProps = state => ({
-	collection_data: state.appReducer.invert_collection_data
-});
-
-
-const mapDispatchToProps = dispatch => ({
-    loadData() {
-        dispatch({
-            type: 'LOAD_INVERT_COLLECTION_DATA',
-            payload: {}
-        })
-    },
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(CenaListaItensLidos);

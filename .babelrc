@@ -21,7 +21,8 @@
             "@helpers": "./src/helpers",
             "@scenes": "./src/scenes",
             "@services": "./src/services",
-            "@styles": "./src/styles"
+            "@styles": "./src/styles",
+            "@configs": "./src/configs"
           }
         }
       ]
