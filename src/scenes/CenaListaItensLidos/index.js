@@ -15,12 +15,16 @@ import { useDispatch, useSelector } from 'react-redux';
 
 // Importações do Realm
 import { RealmContext } from '@configs/realmConfig'; // Ajuste o caminho do seu config
+import { useRoute } from '@react-navigation/native';
 
 // Pegamos os hooks de dentro do contexto
 const {useQuery} = RealmContext;
 
-const CenaListaItensLidos = ({ origin }) => {
+const CenaListaItensLidos = () => {
   const dispatch = useDispatch();
+  const route = useRoute();
+
+  const origin = route?.params?.origin;
 
   const allLines = useQuery('InvertLine'); 
 
@@ -50,38 +54,45 @@ const CenaListaItensLidos = ({ origin }) => {
 
   // Fetch scanned items from AsyncStorage
   const buscaItens = useCallback(async () => {
-    let db_table = 'CODIGOS_AVULSOS';
-
-    if (origin === "separacao_central") {
-      db_table = "CODIGOS_CENTRAL";
-    } else if (origin === "coletagem_invert") {
-      db_table = "CODIGOS_INVERT";
-    }
-
-    setIsLoading(true);
-
-    try {
-      const value = await AsyncStorage.getItem(db_table);
-      if (value !== null) {
-        let codigos = JSON.parse(value);
-        if (search.trim() !== "") {
-          const buscaUsuario = search.trim().toLowerCase();
-          codigos = codigos.filter((codigo) => {
-            return (
-              codigo.produto.toLowerCase().includes(buscaUsuario) ||
-              codigo.barcodescanned.toLowerCase().includes(buscaUsuario)
-            );
-          });
-        }
-        codigos = codigos.sort((a, b) => (a.produto > b.produto ? 1 : -1));
-        setItens(codigos);
-      }
-    } catch (error) {
-      console.log(error);
-      AlertHelper.show('error', 'Erro', 'Ocorreu um erro ao contar os dados');
-    }
-
-    setIsLoading(false);
+	let db_table = 'CODIGOS_AVULSOS';
+  
+	if (origin === "separacao_central") {
+	  db_table = "CODIGOS_CENTRAL";
+	} else if (origin === "coletagem_invert") {
+	  db_table = "CODIGOS_INVERT";
+	}
+  
+	setIsLoading(true);
+  
+	try {
+	  const value = await AsyncStorage.getItem(db_table);
+  
+	  if (value !== null) {
+		let codigos = JSON.parse(value);
+  
+		// Aplica filtro, se houver texto na busca
+		if (search.trim() !== "") {
+		  const buscaUsuario = search.trim().toLowerCase();
+		  codigos = codigos.filter((codigo) => 
+			codigo.produto.toLowerCase().includes(buscaUsuario) ||
+			codigo.barcodescanned.toLowerCase().includes(buscaUsuario)
+		  );
+		}
+  
+		// Ordena os itens filtrados ou não
+		codigos.sort((a, b) => (a.produto > b.produto ? 1 : -1));
+		
+		// Atualiza o estado com os itens filtrados
+		setItens(codigos);
+	  } else {
+		setItens([]); // Caso não existam registros
+	  }
+	} catch (error) {
+	  console.log(error);
+	  AlertHelper.show('error', 'Erro', 'Ocorreu um erro ao carregar os dados');
+	} finally {
+	  setIsLoading(false);
+	}
   }, [origin, search]);
 
   // Update search text and trigger fetch
@@ -142,7 +153,7 @@ const CenaListaItensLidos = ({ origin }) => {
         <FlatList
           data={itens}
           renderItem={renderItem}
-          keyExtractor={(item) => item.barcodescanned}
+          keyExtractor={(item, index) => 'item_' + index}
           onRefresh={buscaItens}
           refreshing={isLoading}
           ListEmptyComponent={() => (

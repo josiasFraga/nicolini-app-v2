@@ -77,6 +77,8 @@
     if ( props.origin && props.origin == "coletagem_invert") {
        db_table = "CODIGOS_INVERT";
     }
+
+    console.log(props.origin, db_table);
  
      let _exportData = async (nota='', tipo) => {
     
@@ -159,7 +161,7 @@
             let filename = `COMPRA01_${date}_${month}_${year}__${hours}_${min}_${sec}.txt`;
 
             let path = RNFS.DownloadDirectoryPath + '/'+filename;
-            console.log(RNFS.DownloadDirectoryPath + '/aaaaaaaaaaaaaa.txt','hffghfgh','utf8');
+            console.log(path,'utf8');
 
             RNFS.exists(path).then((success) => {
 
@@ -180,7 +182,8 @@
                 );
                 Share.open({
                     title: "Compartilhar Arquivo ",
-                    url: "file://"+path,
+                    url: `file://${path}`, // Garante que o caminho esteja no formato correto
+                    type: 'text/plain', // Especifica o tipo de arquivo (opcional)
                 })
                 
                 navigation.dispatch(popAction);
@@ -327,122 +330,109 @@
 
    };
  
-   let _exportDataInvert = async () => {
-      try {
+    let _exportDataInvert = async () => {
+        try {
         const value = await AsyncStorage.getItem(db_table);
         if (value !== null) {
-          // We have data!!
-          let codigos = JSON.parse(value)
-          let texto = '';
-          let countCodes = 1;
-          //let codesToFile = codigos;
-          
+            let codigos = JSON.parse(value);
     
-          for(let codigo of codigos) {
-
-               let qtd = codigo.qtd;
-               qtd = _.padStart(qtd, 6, '0');
-               let barCd = codigo.barcodescanned;
-               barCd = _.padStart(barCd, 14, '0');               
-                     
-               texto += barCd + qtd + '.00';
-
-              if ( countCodes <= codigos.length) {
-                  texto += '\r\n';
-              }
-
-              countCodes++;
-              
-          }
-          
-          var date = new Date().getDate(); //To get the Current Date
+            // Agrupa os códigos pelo barcodescanned e soma as quantidades
+            const groupedCodigos = {};
+            for (let codigo of codigos) {
+            const barCd = codigo.barcodescanned;
+            if (!groupedCodigos[barCd]) {
+                groupedCodigos[barCd] = { ...codigo, qtd: 0 };
+            }
+            groupedCodigos[barCd].qtd += parseInt(codigo.qtd, 10);
+            }
+    
+            // Converte o objeto agrupado de volta para um array
+            const codigosAgrupados = Object.values(groupedCodigos);
+    
+            let texto = '';
+            let countCodes = 1;
+    
+            for (let codigo of codigosAgrupados) {
+            let qtd = codigo.qtd.toString();
+            qtd = _.padStart(qtd, 6, '0');
+            let barCd = codigo.barcodescanned;
+            barCd = _.padStart(barCd, 14, '0');
+    
+            texto += barCd + qtd + '.00';
+    
+            if (countCodes <= codigosAgrupados.length) {
+                texto += '\r\n';
+            }
+    
+            countCodes++;
+            }
+    
+            var date = new Date().getDate(); //To get the Current Date
             var month = new Date().getMonth() + 1; //To get the Current Month
             var year = new Date().getFullYear(); //To get the Current Year
             var hours = new Date().getHours(); //To get the Current Hours
             var min = new Date().getMinutes(); //To get the Current Minutes
             var sec = new Date().getSeconds(); //To get the Current Seconds
-
-
-          let filename = `${date}_${month}_${year}__${hours}_${min}_${sec}.txt`;
-
-          let path = RNFS.DownloadDirectoryPath + '/'+filename;
-          console.log(path);
-
-          RNFS.exists(path).then((success) => {
-
-              if (success) {
-                  console.log("arquivo excluido");
-                  RNFS.unlink(path).then(() => {
-                  })
-               }
-
-          }).catch();
-          
-          console.log("Tentando salvar em uft8...");
-
-          RNFS.writeFile(path, texto, 'utf8')
-          .then((success) => {
-              AlertHelper.show(
-                  'success',
-                  'Tudo Certo',
-                  'Arquivo Exportado Com Sucesso!',
-              );
-              Share.open({
-                  title: "Compartilhar Arquivo ",
-                  url: "file://"+path,
-              });
-
-              navigation.dispatch(popAction);
-          })
-          .catch((err) => {
-            console.log("...não deu");
-            console.log("Tentando salvar em ascii...");
-            
-            RNFS.writeFile(path, texto, 'ascii')
+    
+            let filename = `${date}_${month}_${year}__${hours}_${min}_${sec}.txt`;
+    
+            let path = RNFS.DownloadDirectoryPath + '/' + filename;
+            console.log(path);
+    
+            RNFS.exists(path)
             .then((success) => {
-                AlertHelper.show(
-                    'success',
-                    'Tudo Certo',
-                    'Arquivo Exportado Com Sucesso!',
-                );
+                if (success) {
+                console.log('arquivo excluido');
+                RNFS.unlink(path).then(() => {});
+                }
+            })
+            .catch();
+    
+            console.log('Tentando salvar em uft8...');
+    
+            RNFS.writeFile(path, texto, 'utf8')
+            .then((success) => {
+                AlertHelper.show('success', 'Tudo Certo', 'Arquivo Exportado Com Sucesso!');
                 Share.open({
-                    title: "Compartilhar Arquivo ",
-                    url: "file://"+path,
+                title: 'Compartilhar Arquivo ',
+                url: 'file://' + path,
                 });
-                
+    
                 navigation.dispatch(popAction);
             })
             .catch((err) => {
-                console.log(err);
-                AlertHelper.show(
+                console.log('...não deu');
+                console.log('Tentando salvar em ascii...');
+    
+                RNFS.writeFile(path, texto, 'ascii')
+                .then((success) => {
+                    AlertHelper.show('success', 'Tudo Certo', 'Arquivo Exportado Com Sucesso!');
+                    Share.open({
+                    title: 'Compartilhar Arquivo ',
+                    url: 'file://' + path,
+                    });
+    
+                    navigation.dispatch(popAction);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    AlertHelper.show(
                     'error',
                     'Erro',
                     'Ocorreu um erro ao escrever o arquivo',
-                );
+                    );
+                });
             });
-
-          });
- 
         } else {
-
-          AlertHelper.show(
-              'info',
-              'Informação',
-              'Nenhum item cadastrado!',
-          );
-          
-          navigation.dispatch(popAction);
+            AlertHelper.show('info', 'Informação', 'Nenhum item cadastrado!');
+    
+            navigation.dispatch(popAction);
         }
-      } catch (error) {
-          console.log(error);
-          AlertHelper.show(
-              'error',
-              'Erro',
-              'Ocorreu um errro ao exportar os dados',
-          );
-      }
-
-  };
+        } catch (error) {
+        console.log(error);
+        AlertHelper.show('error', 'Erro', 'Ocorreu um erro ao exportar os dados');
+        }
+    };
 
 
     return(
