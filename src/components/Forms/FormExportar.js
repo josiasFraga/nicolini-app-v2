@@ -84,7 +84,7 @@
     
         try {
             console.log("... Buscando dados a exportar " + db_table);
-          const value = await AsyncStorage.getItem('db_table');
+          const value = await AsyncStorage.getItem(db_table);
           if (value !== null) {
             // We have data!!
             let codigos = JSON.parse(value)

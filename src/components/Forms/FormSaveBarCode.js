@@ -531,11 +531,12 @@ export const FormSaveBarCode = (props) => {
                 }
             }
 
+            console.log('..Salvando lista de produtos ['+db_table+']');
             await AsyncStorage.setItem(
                 db_table,
                 JSON.stringify(codigos)
             );
-            
+            console.log('-> Item salvo com sucesso');
             dispatch({
                 type: 'LOAD_SINGLE_COLLECTION_DATA',
                 payload: {}
