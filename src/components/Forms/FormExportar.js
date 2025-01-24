@@ -295,7 +295,8 @@
                );
                Share.open({
                    title: "Compartilhar Arquivo ",
-                   url: "file://"+path,
+                   url: `file://${path}`, // Garante que o caminho esteja no formato correto
+                   type: 'text/plain', // Especifica o tipo de arquivo (opcional)
                });
                
                navigation.dispatch(popAction);
@@ -392,10 +393,11 @@
     
             RNFS.writeFile(path, texto, 'utf8')
             .then((success) => {
-                AlertHelper.show('success', 'Tudo Certo', 'Arquivo Exportado Com Sucesso!');
+                AlertHelper.show('success', 'Tudo Certo', 'Arquivo Exportado Com Sucesso para pasta downloads!');
                 Share.open({
                 title: 'Compartilhar Arquivo ',
-                url: 'file://' + path,
+                url: `file://${path}`, // Garante que o caminho esteja no formato correto
+                type: 'text/plain', // Especifica o tipo de arquivo (opcional)
                 });
     
                 navigation.dispatch(popAction);
@@ -409,7 +411,8 @@
                     AlertHelper.show('success', 'Tudo Certo', 'Arquivo Exportado Com Sucesso!');
                     Share.open({
                     title: 'Compartilhar Arquivo ',
-                    url: 'file://' + path,
+                    url: `file://${path}`, // Garante que o caminho esteja no formato correto
+                    type: 'text/plain', // Especifica o tipo de arquivo (opcional)
                     });
     
                     navigation.dispatch(popAction);
