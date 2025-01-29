@@ -20,6 +20,7 @@ import Header from '@components/Header';
 
 import IMAGES from '@constants/images';
 import COLORS from '@constants/colors';
+import PickerLojas from '@components/Forms/Components/PickerLojas';
 
 const CenaColetagemAvulsa = () => {
 	const [modalVisible, setModalVisible] = useState(false);
@@ -81,6 +82,8 @@ const CenaColetagemAvulsa = () => {
 
 			return acc;
 		}, {}));
+
+		setSubmitting(true);
 	
 	dispatch({
 		type: 'SEND_SINGLE_SPLIT',
@@ -91,6 +94,17 @@ const CenaColetagemAvulsa = () => {
 			callbackSuccess: () => {
 				resetForm();
 				setModalVisible(false);
+			},
+			callbackFinally: (response) => {
+				if ( response.msgs_not_found && response.msgs_not_found.length > 0 ) {
+					let msg = 'Alguns códigos não foram encontrados no sistema\n\n';
+					response.msgs_not_found.forEach((message) => {
+						msg += message + '\n';
+					});
+					showAlert(msg);
+				}
+
+				setSubmitting(false);
 			}
 		}
 	})
@@ -261,25 +275,23 @@ const CenaColetagemAvulsa = () => {
 							})}
 							onSubmit={(values, { setSubmitting, resetForm }) => sendDataToBackend(values, setSubmitting, resetForm)}
 						>
-							{({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting }) => (
+							{(formik) => (
 								<View>
 									<Text style={styles.modalText}>Digite o código da loja</Text>
-									<TextInput
-										style={styles.input}
-										onChangeText={handleChange('storeCode')}
-										onBlur={handleBlur('storeCode')}
-										value={values.storeCode}
-										placeholder="Código da loja"
+
+        							<PickerLojas 
+										ignoreCodes={['3', 'ACC', 'ADM', 'ADR', 'CDA', 'CEA', 'CHA', 'CNL', 'DPC', 'CNL', 'FCH', 'HLD', 'HRT', 'MNT', 'ONP', 'SED', 'SGI', 'PRD']}
+										formik={formik}
+										name="storeCode"
 									/>
-									{errors.storeCode && touched.storeCode ? (
-										<Text style={styles.errorText}>{errors.storeCode}</Text>
-									) : null}
+						
 									<View style={styles.buttonContainer}>
 										<Button
-											onPress={handleSubmit}
+											onPress={formik.handleSubmit}
 											title="Enviar"
-						disabled={isSubmitting}
+											disabled={formik.isSubmitting}
 											buttonStyle={styles.modalButton}
+											disabledStyle={{ backgroundColor: '#CCC' }}
 										/>
 										<Button
 											onPress={() => setModalVisible(!modalVisible)}

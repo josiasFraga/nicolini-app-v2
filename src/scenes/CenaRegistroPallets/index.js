@@ -1,114 +1,199 @@
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { StyleSheet, View, StatusBar, TextInput, Text, ScrollView } from 'react-native';
 import { Button } from 'react-native-elements';
-import { Formik, FieldArray } from 'formik';
+import { useFormik } from 'formik';
 import * as yup from 'yup';
 
-import COLORS from '@constants/colors';  
-import GlobalStyle from '@styles/global';
-import AlertHelper from '@components/Alert/AlertHelper';
+import COLORS from '@constants/colors';
 import Header from '@components/Header';
+import PickerLojas from '@components/Forms/Components/PickerLojas';
 
-const ValidateSchema = yup.object().shape({
-  lpallets: yup.array().of(
-    yup.object().shape({
-      palletNumber: yup.string().required('Número do pallet é obrigatório'),
-    })
-  ).min(1, 'Você deve adicionar pelo menos um pallet')
-});
 
 const CenaRegistroPallets = (props) => {
-  const dispatch = useDispatch();
+	const dispatch = useDispatch();
 
-  return (
-    <View style={styles.container}>
-      <StatusBar
-        translucent={true}
-        backgroundColor={'transparent'}
-        barStyle={'light-content'}
-      />
-      <Header 
-        backButton={true} 
-        titulo={"Registro de Pallets"} 
-        styles={{backgroundColor: COLORS.primary}} 
-        titleStyle={{color: '#f7f7f7'}} 
-        iconColor='#f7f7f7'
-      />
-      <Formik
-        initialValues={{ lpallets: [{ palletNumber: '' }] }}
-        validationSchema={ValidateSchema}
-        onSubmit={(values, { setSubmitting, resetForm }) => {
-          dispatch({
-            type: 'SAVE_PALLETS',
-            payload: {
-              submitValues: values,
-              setSubmitting: setSubmitting,
-              callback_success: () => {
-                resetForm();
-              }
-            }
-          });
-        }}
-      >
-        {({ values, handleChange, handleBlur, handleSubmit, isSubmitting, errors, touched }) => (
-          <View style={styles.formContainer}>
-            <ScrollView>
-              <FieldArray name="lpallets">
-                {({ push, remove }) => (
-                  <View>
-                    {values.lpallets.map((pallet, index) => (
-					<View key={index}>
-                      <View style={styles.palletContainer}>
-                        <TextInput
-                          style={styles.input}
-                          onChangeText={handleChange(`lpallets.${index}.palletNumber`)}
-                          onBlur={handleBlur(`lpallets.${index}.palletNumber`)}
-                          value={pallet.palletNumber}
-                          placeholder="Número do pallet"
-                        />
-                        <Button
-                          title="Remover"
-                          onPress={() => remove(index)}
-                          buttonStyle={styles.removeButton}
-                          icon={{
-                            name: 'delete',
-                            type: 'material',
-                            color: 'white',
-                          }}
-                        />
-                      </View>
-                        {errors.lpallets && errors.lpallets[index] && touched.lpallets && touched.lpallets[index] && (
-                          <Text style={styles.error}>{errors.lpallets[index].palletNumber}</Text>
-                        )}
-					</View>
-                    ))}
-                    <Button
-                      title="Adicionar Pallet"
-                      onPress={() => push({ palletNumber: '' })}
-                      buttonStyle={styles.addButton}
-                    />
-                  </View>
-                )}
-              </FieldArray>
-              {errors.lpallets && touched.lpallets && typeof errors.lpallets === 'string' && (
-                <Text style={styles.error}>{errors.lpallets}</Text>
-              )}
-            </ScrollView>
-            <Button
-              title="Registrar Pallets"
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-			  buttonStyle={{borderRadius: 25, paddingVertical: 10, backgroundColor: COLORS.primary}}
-              containerStyle={styles.submitButtonContainer}
-            />
-          </View>
-        )}
-      </Formik>
-    </View>
-  );
+	const [loja, setLoja] = React.useState('');
+
+	const ValidateSchema = yup.object().shape({
+		loja: yup.string().required('Loja é obrigatória'),
+		lpallets: yup.array().of(
+			yup.object().shape({
+				palletNumber: yup
+					.string() // Mudamos para string para validar os primeiros caracteres
+					.matches(/^\d+$/, 'O número do palete deve conter apenas números') // Garante que só tenha números
+					.required('Número do pallet é obrigatório')
+					.length(14, 'Número do pallet deve ter exatamente 14 dígitos')
+					.test('match-store-code', 'Os 3 primeiros dígitos do pallet devem ser iguais ao código da loja', function (value) {
+						if (!value || !loja) return false; // Se não houver valor ou loja, retorna erro
+						return value.startsWith(loja); // Verifica se os 3 primeiros dígitos do pallet correspondem ao código da loja
+					}),
+			})
+		).min(1, 'Você deve adicionar pelo menos um pallet')
+	});
+
+	// useFormik substitui a tag <Formik>
+	const formik = useFormik({
+		initialValues: {
+			loja: '',
+			lpallets: [{ palletNumber: '' }],
+		},
+		// Criamos o schema dinamicamente para pegar o valor "loja"
+		validationSchema: ValidateSchema,
+		validateOnChange: true,
+		validateOnBlur: true,
+		onSubmit: (values, { setSubmitting, resetForm }) => {
+		dispatch({
+			type: 'SAVE_PALLETS',
+			payload: {
+			submitValues: values,
+			setSubmitting: setSubmitting,
+			callback_success: () => {
+				resetForm();
+			},
+			},
+		});
+		},
+	});
+
+	/**
+	 * Adiciona um novo pallet à lista
+	 */
+	const addPallet = () => {
+		formik.setFieldValue('lpallets', [
+		...formik.values.lpallets,
+		{ palletNumber: '' },
+		]);
+	};
+
+	/**
+	 * Remove um pallet pelo índice
+	 */
+	const removePallet = (index) => {
+		if (formik.values.lpallets.length === 1) return; // Impede remover se só existe 1
+		const updated = [...formik.values.lpallets];
+		updated.splice(index, 1);
+		formik.setFieldValue('lpallets', updated);
+	};
+
+	useEffect(() => {
+		if (formik.values?.loja) {
+			setLoja(formik.values.loja);
+		}
+	}, [formik.values?.loja]);
+
+	return (
+		<View style={styles.container}>
+		<StatusBar
+			translucent={true}
+			backgroundColor={'transparent'}
+			barStyle={'light-content'}
+		/>
+
+		<Header
+			backButton={true}
+			titulo={'Registro de Pallets'}
+			styles={{ backgroundColor: COLORS.primary }}
+			titleStyle={{ color: '#f7f7f7' }}
+			iconColor="#f7f7f7"
+		/>
+
+		<View style={styles.formContainer}>
+			<ScrollView>
+			{/* Picker de lojas */}
+			<PickerLojas
+				name="loja"
+				formik={formik}
+				ignoreCodes={[
+				'3', 'ACC', 'ADM', 'ADR', 'CDA', 'CEA', 'CHA', 'CNL', 'DPC',
+				'CNL', 'FCH', 'HLD', 'HRT', 'MNT', 'ONP', 'SED', 'SGI', 'PRD',
+				]}
+				onBlur={() => formik.setFieldTouched('loja', true)}
+			/>
+			{/* Exibe erro de loja */}
+			{formik.touched.loja && formik.errors.loja && (
+				<Text style={styles.error}>{formik.errors.loja}</Text>
+			)}
+
+			{/* Lista de pallets */}
+			{formik.values.lpallets.map((pallet, index) => (
+				<View key={index}>
+				<View style={styles.palletContainer}>
+					<TextInput
+					style={styles.input}
+					onChangeText={(text) =>
+						formik.setFieldValue(`lpallets.${index}.palletNumber`, text)
+					}
+					onBlur={() =>
+						formik.setFieldTouched(`lpallets.${index}.palletNumber`, true)
+					}
+					value={pallet.palletNumber}
+					placeholder="Número do pallet"
+					maxLength={14}
+					editable={formik.values.loja !== ''}
+					/>
+					<Button
+					title="Remover"
+					onPress={() => removePallet(index)}
+					buttonStyle={styles.removeButton}
+					disabled={
+						formik.values.lpallets.length === 1 ||
+						!formik.values.loja
+					}
+					icon={{
+						name: 'delete',
+						type: 'material',
+						color: 'white',
+					}}
+					/>
+				</View>
+
+				{/* Erro específico do palletNumber */}
+				{formik.touched.lpallets?.[index]?.palletNumber &&
+					formik.errors.lpallets?.[index]?.palletNumber && (
+					<Text style={styles.error}>
+						{formik.errors.lpallets[index].palletNumber}
+					</Text>
+					)}
+				</View>
+			))}
+
+			{/* Botão para adicionar mais pallets */}
+			<Button
+				title="Adicionar Pallet"
+				onPress={addPallet}
+				buttonStyle={styles.addButton}
+				disabled={!formik.values.loja || formik.values.loja === ''}
+			/>
+
+			{/* Erro geral do array, caso ocorra */}
+			{formik.errors.lpallets &&
+				typeof formik.errors.lpallets === 'string' &&
+				formik.touched.lpallets && (
+				<Text style={styles.error}>{formik.errors.lpallets}</Text>
+				)}
+			</ScrollView>
+
+			{/* Botão de submit */}
+			<Button
+			title="Registrar Pallets"
+			onPress={formik.handleSubmit}
+			disabled={formik.isSubmitting}
+			buttonStyle={{
+				borderRadius: 25,
+				paddingVertical: 10,
+				backgroundColor: COLORS.primary,
+			}}
+			containerStyle={styles.submitButtonContainer}
+			/>
+		</View>
+		</View>
+	);
 };
 
+export default CenaRegistroPallets;
+
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -138,9 +223,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
     marginLeft: 10,
   },
-  submitButton: {
-    backgroundColor: COLORS.primary,
-  },
   submitButtonContainer: {
     position: 'absolute',
     bottom: 20,
@@ -152,5 +234,3 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 });
-
-export default CenaRegistroPallets;

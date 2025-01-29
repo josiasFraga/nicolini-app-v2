@@ -890,7 +890,7 @@ function* savePallets({payload}) {
 			AlertHelper.show('success', 'Tudo Certo', 'Pallets registrados com sucesso!');
 	
 		} else {
-			AlertHelper.show('error', 'Error', response.data.message);
+			AlertHelper.show('error', 'Error', response.data.msg);
 			yield payload.setSubmitting(false);
 		}
 
@@ -938,8 +938,6 @@ function* sendIndividualSplit({payload}) {
 
 		if ( response.data.status === 'ok' ) {
 
-			yield payload.setSubmitting(false);
-
 			if ( payload.callbackSuccess ) {
 				yield payload.callbackSuccess();
 			}
@@ -948,8 +946,13 @@ function* sendIndividualSplit({payload}) {
 	
 		} else {
 			AlertHelper.show('error', 'Error', response.data.message);
-			yield payload.setSubmitting(false);
 		}
+
+		if ( payload.callbackFinally ) {
+			yield payload.callbackFinally(response.data);
+		}
+
+		yield payload.setSubmitting(false);
 
 	} catch ({message, response}) {
 		console.error('[SAGA] - [REGISTRANDO PALLETS]', { message, response });
