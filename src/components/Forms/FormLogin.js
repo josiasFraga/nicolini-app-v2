@@ -10,7 +10,7 @@ export default function FormLogin(props) {
   return (
     <>
     <View>
-        <PickerLojas formik={formik} />
+        <PickerLojas formik={formik} name={'loja'} />
         <Input
             label="Login"
             leftIcon={<Icon name="user" type={"antdesign"} size={24} color={COLORS.quaternary} />}

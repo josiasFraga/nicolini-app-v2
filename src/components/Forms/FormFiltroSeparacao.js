@@ -29,7 +29,7 @@ export default function FormFiltroSeparacao(props) {
     <>
     <View>
 
-        <PickerLojas formik={formik} />
+        <PickerLojas formik={formik} name={'loja'} />
 
         <PickerDepositos formik={formik} />
     
