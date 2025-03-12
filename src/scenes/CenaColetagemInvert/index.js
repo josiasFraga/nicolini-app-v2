@@ -14,6 +14,7 @@ import RNFS from 'react-native-fs';
 
 import GlobalStyle from '@styles/global';
 import AlertHelper from '@components/Alert/AlertHelper';
+import SearchSelectProduct from './components/SearchSelectProduct';
 import Header from '@components/Header';
 import IMAGES from '@constants/images';
 import COLORS from '@constants/colors';
@@ -41,6 +42,7 @@ const CenaColetagemInvert = () => {
   // Local state
   const [fileData, setFileData] = useState([]);
   const [fileDataNItems, setFileDataNItems] = useState(0);
+  const [modalVisible, setModalVisible] = useState(false);
 
   /**
    * Load data from Redux saga or your store
@@ -59,7 +61,7 @@ const CenaColetagemInvert = () => {
     console.log('...lendo dados do Realm');
     // O "allLines" é um Results do Realm; length retorna quantos registros existem.
     setFileDataNItems(allLines.length);
-	setFileData(allLines);
+	  setFileData(allLines);
 
   }, [allLines]);
 
@@ -143,7 +145,7 @@ const CenaColetagemInvert = () => {
               });
             });
           });
-		  console.log('-> dados do arquivo salvos');
+		      console.log('-> dados do arquivo salvos');
           setFileData(contentToSave);
           setFileDataNItems(contentToSave.length);
 
@@ -210,7 +212,7 @@ const CenaColetagemInvert = () => {
           text: 'Tenho',
           onPress: async () => {
             await AsyncStorage.removeItem('CODIGOS_INVERT');
-			await realm.write(() => {
+			      await realm.write(() => {
               // Apaga tudo no Realm (caso você tenha mais de um schema, cuidado!)
               realm.deleteAll();
             });
@@ -225,6 +227,19 @@ const CenaColetagemInvert = () => {
     );
   };
 
+  const openReaderBarCode = (barcode) => {
+    setModalVisible(false);
+    navigation.dispatch(
+      CommonActions.navigate({
+        name: 'ModalBarcodeReader',
+        params: {
+        origin: "coletagem_invert",
+        setEanRead: barcode,
+        },
+      })
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -233,7 +248,7 @@ const CenaColetagemInvert = () => {
         barStyle="dark-content"
       />
 
-      <Header backButton titulo="Coletagem Invert" />
+      <Header backButton titulo="Coletagem Invent" />
 
       {/* Top data info */}
       <View style={{ backgroundColor: COLORS.primary }}>
@@ -302,14 +317,14 @@ const CenaColetagemInvert = () => {
                 }}
                 title="Ler código de barras"
                 onPress={() => {
-					navigation.dispatch(
-					CommonActions.navigate({
-						name: 'ModalBarcodeReader',
-						params: {
-						origin: "coletagem_invert"
-						},
-					})
-					);
+                  navigation.dispatch(
+                  CommonActions.navigate({
+                    name: 'ModalBarcodeReader',
+                    params: {
+                    origin: "coletagem_invert"
+                    },
+                  })
+                  );
                 }}
               />
             </View>
@@ -338,6 +353,27 @@ const CenaColetagemInvert = () => {
                       },
                     })
                   );
+                }}
+              />
+            </View>
+
+            {/* Buscar produto */}
+            <View style={styles.innerSpace}>
+              <Button
+                icon={
+                  <View style={{ marginRight: 20 }}>
+                    <Icon name="search" size={20} type="feather" iconStyle={{ color: COLORS.secondary }} />
+                  </View>
+                }
+                titleStyle={{}}
+                buttonStyle={{
+                  borderRadius: 25,
+                  paddingVertical: 10,
+                  backgroundColor: COLORS.primary,
+                }}
+                title="Buscar/Selecionar produto"
+                onPress={() => {
+                  setModalVisible(true);
                 }}
               />
             </View>
@@ -437,6 +473,13 @@ const CenaColetagemInvert = () => {
           </>
         )}
       </View>
+
+      <SearchSelectProduct
+        visible={modalVisible}
+        setVisible={setModalVisible}
+        allLines={allLines}
+        openReaderBarCode={openReaderBarCode}
+      />
 
       {/* Background Image */}
       <View style={[GlobalStyle.secureMargin, { justifyContent: 'flex-end' }]}>

@@ -65,7 +65,7 @@ export default class CenaDeposito extends Component<Props> {
 							}
 							titleStyle={{}}
 							buttonStyle={{borderRadius: 25, paddingVertical: 10, backgroundColor: COLORS.primary}}
-							title="Coletagem Invert"
+							title="Coletagem Invent"
 							onPress={() => {
 								
 
