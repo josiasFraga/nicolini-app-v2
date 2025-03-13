@@ -856,7 +856,10 @@ export const FormSaveBarCode = (props) => {
                 'is-valid-format',
                 'Formato inválido. O valor deve conter apenas números e hífens.',
                 function (value) {
-                    if (db_table === "CODIGOS_AVULSOS") {
+                    if (db_table === "CODIGOS_INVERT") {
+                        // Permite números inteiros, números fracionados e hífens
+                        return /^[0-9.-]+$/.test(value);
+                    } else if (db_table === "CODIGOS_AVULSOS") {
                         // Permite qualquer sequência de números e hífens
                         return /^[0-9-]+$/.test(value);
                     }
@@ -1013,7 +1016,19 @@ export const FormSaveBarCode = (props) => {
                         <Input
                             name={"qtd"}
                             onChangeText={(text) => {
-                                if (db_table === "CODIGOS_AVULSOS") {
+                                if (db_table === "CODIGOS_INVERT") {
+                                    // Substitui vírgulas por pontos
+                                    let textWithDot = text.replace(/,/g, ".");
+                                    // Permite apenas um ponto: se houver mais de um, mantém o primeiro e remove os demais
+                                    const parts = textWithDot.split('.');
+                                    if (parts.length > 1) {
+                                      textWithDot = parts.shift() + '.' + parts.join('');
+                                    }
+                                    // Remove caracteres não permitidos (mantém apenas dígitos, ponto e hífen)
+                                    const newText = textWithDot.replace(/[^0-9.-]/g, "");
+                                    setFieldValue("qtd", newText);
+                                }
+                                else if (db_table === "CODIGOS_AVULSOS") {
                                     // Permite apenas números e hífens no formato correto
                                     const newText = text.replace(/[^0-9-]/g, "");
                                     setFieldValue("qtd", newText);

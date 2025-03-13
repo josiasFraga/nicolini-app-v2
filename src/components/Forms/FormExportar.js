@@ -344,7 +344,7 @@
             if (!groupedCodigos[barCd]) {
                 groupedCodigos[barCd] = { ...codigo, qtd: 0 };
             }
-            groupedCodigos[barCd].qtd += parseInt(codigo.qtd, 10);
+            groupedCodigos[barCd].qtd += parseFloat(codigo.qtd, 10);
             }
     
             // Converte o objeto agrupado de volta para um array
